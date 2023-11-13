@@ -28,6 +28,9 @@ int main(int argc, char *argv[]) {
     if (ASport == -1) ASport = 58000 + GN; // default port
 
     // rest of your code
+    printf("ASIP: %s\n", ASIP);
+    printf("ASport: %d\n", ASport);
+
 
     free(ASIP);
     return 0;
