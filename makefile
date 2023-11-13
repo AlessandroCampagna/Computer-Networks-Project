@@ -1,8 +1,12 @@
 CC=g++
 CFLAGS=-Wall -g
 
-all:
-	$(CC) $(CFLAGS) -o run *.cpp
+user:
+	$(CC) $(CFLAGS) -o user user.cpp
+	./run
+
+server:
+	$(CC) $(CFLAGS) -o server server.cpp
 	./run
 
 clean:

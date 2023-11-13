@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <cstdio>
 
 int main(int argc, char *argv[]) {
     char *ASIP = NULL;
@@ -23,7 +24,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (ASIP == NULL) {
-        ASIP = strdup("127.0.0.1"); // default IP
+        ASIP = strdup("localhost"); // local host default
     }
 
     if (ASport == -1) {
