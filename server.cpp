@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     bool Verbose = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, "n:p:")) != -1) {
+    while ((opt = getopt(argc, argv, "p:v")) != -1) {
         switch (opt) {
         case 'p':
             ASport = atoi(optarg);
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
             Verbose = true;
             break;
         default:
-            fprintf(stderr, "Usage: %s [-n ASIP] [-p ASport]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [-p ASport] [-v]\n", argv[0]);
             exit(EXIT_FAILURE);
         }
     }
