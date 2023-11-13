@@ -3,11 +3,11 @@ CFLAGS=-Wall -g
 
 user:
 	$(CC) $(CFLAGS) -o user user.cpp
-	./run
+	./user
 
 server:
 	$(CC) $(CFLAGS) -o server server.cpp
-	./run
+	./server
 
 clean:
 	rm -rf user server
