@@ -23,13 +23,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (ASIP == NULL) {
-        ASIP = strdup("localhost"); // local host default
-    }
-
-    if (ASport == -1) {
-        ASport = 58000 + GN; // default port
-    }
+    // Default settings
+    if (ASIP == NULL) ASIP = strdup("localhost"); // default IP
+    if (ASport == -1) ASport = 58000 + GN; // default port
 
     // rest of your code
 
