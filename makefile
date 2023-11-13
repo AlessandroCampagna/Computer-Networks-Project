@@ -3,11 +3,18 @@ CFLAGS=-Wall -g
 
 user:
 	$(CC) $(CFLAGS) -o user user.cpp
-	./run
+	
+	./user -n 17.17.17 -p 17 \n
+	
+	./user -n 17.17.17 
+
+	./user -p 17	
+
+	./user
 
 server:
 	$(CC) $(CFLAGS) -o server server.cpp
-	./run
+	./server
 
 clean:
-	rm -rf run
+	rm -rf user server
