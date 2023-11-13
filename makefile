@@ -10,4 +10,4 @@ server:
 	./run
 
 clean:
-	rm -rf run
+	rm -rf user server
