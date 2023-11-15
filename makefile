@@ -1,13 +1,13 @@
-CC=g++
+CC=gcc
+CXX=g++
 CFLAGS=-Wall -g
 
 user:
-	$(CC) $(CFLAGS) -o user user.cpp
-	./user
+    $(CXX) $(CFLAGS) -o user user.cpp
 
-server:
-	$(CC) $(CFLAGS) -o server server.cpp
-	./server
+server: 
+    $(CXX) $(CFLAGS) -o server.o server/*.cpp
+    $(CC) $(CFLAGS) -o server.o server/*.c
 
 clean:
-	rm -rf user server
+    rm -f user.o server.o
