@@ -1,23 +1,11 @@
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <string.h>
-#include <stdio.h>
-#include <cstdio>
-
-#define TRUE 1
-#define BUFFER_SIZE 128
-#define PORT 58000
+#include "server.h"
+#include "process.h"
 
 int main(int argc, char *argv[]) {
     int ASport = -1;
     char ASportStr[6]; //TODO check if this is the right size
-    int GN = 17;
-    bool Verbose = false;
+    int GN = GROUP_NUMBER;
+    int Verbose = FALSE;
 
     int fd,errcode;
     ssize_t n;
@@ -33,7 +21,7 @@ int main(int argc, char *argv[]) {
             ASport = atoi(optarg);
             break;
         case 'v':
-            Verbose = true;
+            Verbose = TRUE;
             break;
         default:
             fprintf(stderr, "Usage: %s [-p ASport] [-v]\n", argv[0]);
@@ -89,6 +77,12 @@ int main(int argc, char *argv[]) {
         // Print received message    
         buffer[n] = '\0'; // Ensure the buffer is null-terminated
         printf("received: %s\n", buffer);
+
+        errcode = process_request(buffer);
+        if(errcode == -1) {
+            perror("Error processing request");
+            exit(EXIT_FAILURE);
+        }
 
         // Echo back
 	    n = sendto(fd, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
