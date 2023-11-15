@@ -5,7 +5,7 @@ int main(int argc, char *argv[]) {
     int ASport = -1;
     char ASportStr[6]; //TODO check if this is the right size
     int GN = GROUP_NUMBER;
-    bool Verbose = false;
+    int Verbose = FALSE;
 
     int fd,errcode;
     ssize_t n;
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
             ASport = atoi(optarg);
             break;
         case 'v':
-            Verbose = true;
+            Verbose = TRUE;
             break;
         default:
             fprintf(stderr, "Usage: %s [-p ASport] [-v]\n", argv[0]);
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Wait for requests
-    while(true) {
+    while(TRUE) {
         // Receive message
 	    addrlen = sizeof(addr);
 	    n = recvfrom(fd, buffer, BUFFER_SIZE, 0, (struct sockaddr*) &addr, &addrlen);

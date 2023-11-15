@@ -10,12 +10,12 @@
 #include <netdb.h>
 #include <string.h>
 #include <stdio.h>
-#include <cstdio>
-#include <string>
 
 #define BUFFER_SIZE 128
 #define PORT 58000
 #define GROUP_NUMBER 17
+#define TRUE 1
+#define FALSE 0
 
 int process_request(char *buffer);
 
