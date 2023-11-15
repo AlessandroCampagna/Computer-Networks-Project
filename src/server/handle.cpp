@@ -25,7 +25,7 @@ int handle_request(char *buffer) {
 
     // Handle the request
     if (tokens[0] == "LIN") {
-        handle_login(tokens[1]);
+        handle_login(tokens);
     } else {
         printf("Invalid request\n");
     }
@@ -33,7 +33,8 @@ int handle_request(char *buffer) {
     return 0;
 }
 
-int handle_login(std::string token) {
-
+int handle_login(std::vector<std::string> token) {
+    
     return 0;
 }
+
