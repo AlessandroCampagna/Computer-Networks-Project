@@ -44,7 +44,7 @@ std::vector<std::string> split_string(char* buffer) {
     std::vector<std::string> words;
     std::string word = "";
     for (auto c : str) {
-        if if ((c == ' ') or (c == '\n')) {
+        if ((c == ' ') or (c == '\n')) {
             words.push_back(word);
             word = "";
         } else {
