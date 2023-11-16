@@ -24,5 +24,8 @@
 enum ConnectionType {
     UDP,
     TCP,
+    EXIT,
     INVALID
 };
+
+#endif

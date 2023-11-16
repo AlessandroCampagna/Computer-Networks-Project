@@ -1,53 +1,26 @@
-// UDP
 #include "user.h"
 
-// Define the function pointers for the commands
-using CommandFunction = std::function<ConnectionType(char*)>;
+using CommandFunction = std::function<ConnectionType(std::vector<std::string>*)>;
 
-// Define the hash map to store the commands and their associated functions
-std::unordered_map<std::string, CommandFunction> command_map;
+std::vector<std::string> split_string(char*);
+void unsplit_string(char*, std::vector<std::string>*);
 
-char uid[7];
-char password[9];
+ConnectionType login(std::vector<std::string>*);
+ConnectionType logout(std::vector<std::string>*);
+ConnectionType unregister(std::vector<std::string>*);
+ConnectionType myauctions(std::vector<std::string>*);
+ConnectionType exituser(std::vector<std::string>*);
 
-// Define the functions for each command
-ConnectionType login(std::vector<std::string>* buffer_str) {
-    buffer_str[0] = 'LIN';
-    uid = buffer_str[1];
-    password = buffer_str[2];
-    return ConnectionType::UDP;
-}
+std::string uid;
+std::string password;
 
-ConnectionType logout(std::vector<std::string>* buffer_str) {
-    buffer_str[0] = 'LOU';
-    buffer_str->push_back(uid);
-    buffer_str->push_back(password);
-    return ConnectionType::UDP;
-}
-
-ConnectionType unregister(std::vector<std::string>* buffer_str) {
-    buffer_str[0] = 'UNR';
-    buffer_str->push_back(uid);
-    buffer_str->push_back(password);
-    return ConnectionType::UDP;
-}
-
-ConnectionType myauctions(std::vector<std::string>* buffer_str) {
-    buffer_str[0] = 'LMA';
-    buffer_str->push_back(uid);
-    return ConnectionType::UDP;
-}
-
-ConnectionType exit(std::vector<std::string>* buffer_str) {
-    return ConnectionType::EXIT;
-}
-
-// Add the commands and their associated functions to the hash map
-command_map["login"] = login;
-command_map["logout"] = logout;
-command_map["unregister"] = unregister;
-command_map["myauctions"] = myauctions;
-command_map["exit"] = exit;
+const std::unordered_map<std::string, CommandFunction> command_map = {
+    {"login", login},
+    {"logout", logout},
+    {"unregister", unregister},
+    {"myauctions", myauctions},
+    {"exit", exituser}
+};
 
 // Define the user_command function
 ConnectionType user_command(char* buffer) {
@@ -57,7 +30,7 @@ ConnectionType user_command(char* buffer) {
 
     // If the command is found, execute the associated function and return its value
     if (it != command_map.end()) {
-        ConnectionType result = it->second(buffer_words);
+        ConnectionType result = it->second(&buffer_words);
         unsplit_string(buffer, &buffer_words);
         return result;
     }
@@ -84,10 +57,42 @@ std::vector<std::string> split_string(char* buffer) {
 
 void unsplit_string(char* buffer, std::vector<std::string>* words) {
     std::string result = "";
-    for (auto word : words) {
+    for (auto word : *words) {
         result += word + " ";
     }
     std::strcpy(buffer, result.c_str());
+}
+
+// Define the functions for each command
+ConnectionType login(std::vector<std::string>* buffer_str) {
+    (*buffer_str)[0] = "LIN";
+    uid = (*buffer_str)[1];
+    password = (*buffer_str)[2];
+    return ConnectionType::UDP;
+}
+
+ConnectionType logout(std::vector<std::string>* buffer_str) {
+    (*buffer_str)[0] = "LOU";
+    buffer_str->push_back(uid);
+    buffer_str->push_back(password);
+    return ConnectionType::UDP;
+}
+
+ConnectionType unregister(std::vector<std::string>* buffer_str) {
+    (*buffer_str)[0] = "UNR";
+    buffer_str->push_back(uid);
+    buffer_str->push_back(password);
+    return ConnectionType::UDP;
+}
+
+ConnectionType myauctions(std::vector<std::string>* buffer_str) {
+    (*buffer_str)[0] = "LMA";
+    buffer_str->push_back(uid);
+    return ConnectionType::UDP;
+}
+
+ConnectionType exituser(std::vector<std::string>* buffer_str) {
+    return ConnectionType::EXIT;
 }
 
 
