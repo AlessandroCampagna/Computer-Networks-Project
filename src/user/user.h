@@ -28,4 +28,6 @@ enum ConnectionType {
     INVALID
 };
 
+ConnectionType user_command(char* buffer);
+
 #endif

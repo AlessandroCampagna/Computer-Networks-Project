@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
         fgets(buffer, sizeof(buffer), stdin);
 
-        connectionType = user_command(buffer);
+        ConnectionType connectionType = user_command(buffer);
 
         if (connectionType == UDP) {
 
