@@ -1,3 +1,7 @@
+#ifndef USER_H
+#define USER_H
+
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -5,14 +9,20 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <string.h>
 #include <stdio.h>
 #include <cstdio>
+#include <unordered_map>
+#include <functional>
+#include <vector>
+#include <cstring>
+#include <string>
+
 
 #define PORT 58000
 #define BUFFER_SIZE 128
 
 enum ConnectionType {
     UDP,
-    TCP
+    TCP,
+    INVALID
 };

@@ -5,9 +5,7 @@ int main(int argc, char *argv[]) {
     int ASport = -1;
     char ASportStr[6]; //TODO check if this is the right size
     int GN = 17;
-    int uid;
-    int aid;
-    bool logged = false;
+    bool loggedIn = false;
 
     int fd_udp, fd_tcp;
     ssize_t n;
@@ -37,7 +35,7 @@ int main(int argc, char *argv[]) {
     sprintf(ASportStr, "%d", ASport); // convert port to string
 
     fd_udp=socket(AF_INET,SOCK_DGRAM,0); //UDP socket
-    fd=socket(AF_INET,SOCK_STREAM,0); //TCP socket
+    fd_tcp=socket(AF_INET,SOCK_STREAM,0); //TCP socket
 
     memset(&hints_udp,0,sizeof hints_udp);
     hints_udp.ai_family=AF_INET; //IPv4
@@ -48,29 +46,37 @@ int main(int argc, char *argv[]) {
     hints_tcp.ai_socktype=SOCK_STREAM; //TCP socket
 
     getaddrinfo(ASIP,ASportStr,&hints_udp,&res_udp);
-    getaddrinfo(ASIP,ASportStr,&hints_tcp,&res_tcp)
+    getaddrinfo(ASIP,ASportStr,&hints_tcp,&res_tcp);
 
     while(true){
 
         fgets(buffer, sizeof(buffer), stdin);
 
-        if()
-        n=sendto(fd_udp,buffer,strlen(buffer),0,res->ai_addr,res->ai_addrlen);
+        connectionType = user_command(buffer);
 
-        else if(res->ai_socktype==SOCK_STREAM)
-        n=connect(fd_udp,res->ai_addr,res->ai_addrlen);
+        if (connectionType == UDP) {
 
+            n=sendto(fd_udp,buffer,strlen(buffer),0,res_udp->ai_addr,res_udp->ai_addrlen);
+            memset(&buffer,0,sizeof(buffer));
+            addrlen=sizeof(addr);
+            n=recvfrom(fd_udp,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
 
-        memset(&buffer,0,sizeof(buffer));
-        addrlen=sizeof(addr);
-        n=recvfrom(fd_udp,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
+        } else if (connectionType == TCP) {
 
-        write(1,"echo: ",6); write(1,buffer,n);
+            n=connect(fd_tcp,res_tcp->ai_addr,res_tcp->ai_addrlen);
+            write(fd_tcp, buffer, strlen(buffer));
+            memset(&buffer,0,sizeof(buffer));
+            n=read(fd_tcp, buffer, BUFFER_SIZE);
 
+        } else if (connectionType == EXIT){
+            if (!loggedIn) exit(0);
+            else printf("You must logout before exiting\n");
+
+        } else {
+            printf("Invalid Command\n");
+        }
     }
 
     free(ASIP);
     return 0;
 }
-
-
