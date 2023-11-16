@@ -1,30 +1,16 @@
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <string.h>
-#include <stdio.h>
-#include <cstdio>
-
-#define PORT 58000
-#define BUFFER_SIZE 128
+#include "user.h"
 
 int main(int argc, char *argv[]) {
     char *ASIP = NULL;
     int ASport = -1;
     char ASportStr[6]; //TODO check if this is the right size
     int GN = 17;
-    int uid;
-    int aid;
-    bool logged = false;
+    bool loggedIn = false;
 
-    int fd,errcode;
+    int fd_udp, fd_tcp;
     ssize_t n;
     socklen_t addrlen;
-    struct addrinfo hints,*res;
+    struct addrinfo hints_udp, hints_tcp, *res_udp, *res_tcp;
     struct sockaddr_in addr;
     char buffer[BUFFER_SIZE];
 
@@ -48,30 +34,48 @@ int main(int argc, char *argv[]) {
     if (ASport == -1) ASport = PORT + GN; // default port
     sprintf(ASportStr, "%d", ASport); // convert port to string
 
-    fd=socket(AF_INET,SOCK_DGRAM,0); //UDP socket
-    if(fd==-1) /*error*/exit(1);
+    fd_udp=socket(AF_INET,SOCK_DGRAM,0); //UDP socket
+    fd_tcp=socket(AF_INET,SOCK_STREAM,0); //TCP socket
 
-    memset(&hints,0,sizeof hints);
-    hints.ai_family=AF_INET; //IPv4
-    hints.ai_socktype=SOCK_DGRAM; //UDP socket
+    memset(&hints_udp,0,sizeof hints_udp);
+    hints_udp.ai_family=AF_INET; //IPv4
+    hints_udp.ai_socktype=SOCK_DGRAM; //UDP socket
 
-    errcode=getaddrinfo(ASIP,ASportStr,&hints,&res);
-    if(errcode!=0) /*error*/exit(1);
+    memset(&hints_tcp,0,sizeof hints_tcp);
+    hints_tcp.ai_family=AF_INET; //IPv4
+    hints_tcp.ai_socktype=SOCK_STREAM; //TCP socket
 
-    fgets(buffer, sizeof(buffer), stdin);
+    getaddrinfo(ASIP,ASportStr,&hints_udp,&res_udp);
+    getaddrinfo(ASIP,ASportStr,&hints_tcp,&res_tcp);
 
-    printf("Sending message to server...\n");
-    n=sendto(fd,buffer,strlen(buffer),0,res->ai_addr,res->ai_addrlen);
-    if(n==-1) /*error*/ exit(1);
+    while(true){
 
-    printf("Awaiting response from server...\n");
-    memset(&buffer,0,sizeof(buffer));
-    addrlen=sizeof(addr);
-    n=recvfrom(fd,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
-    if(n==-1) /*error*/ exit(1);
+        fgets(buffer, sizeof(buffer), stdin);
 
-    write(1,"echo: ",6); write(1,buffer,n);
+        ConnectionType connectionType = user_command(buffer);
 
+        if (connectionType == UDP) {
+
+            n=sendto(fd_udp,buffer,strlen(buffer),0,res_udp->ai_addr,res_udp->ai_addrlen);
+            memset(&buffer,0,sizeof(buffer));
+            addrlen=sizeof(addr);
+            n=recvfrom(fd_udp,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
+
+        } else if (connectionType == TCP) {
+
+            n=connect(fd_tcp,res_tcp->ai_addr,res_tcp->ai_addrlen);
+            write(fd_tcp, buffer, strlen(buffer));
+            memset(&buffer,0,sizeof(buffer));
+            n=read(fd_tcp, buffer, BUFFER_SIZE);
+
+        } else if (connectionType == EXIT){
+            if (!loggedIn) exit(0);
+            else printf("You must logout before exiting\n");
+
+        } else {
+            printf("Invalid Command\n");
+        }
+    }
 
     free(ASIP);
     return 0;
