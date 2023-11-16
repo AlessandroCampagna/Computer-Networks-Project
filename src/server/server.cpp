@@ -1,5 +1,5 @@
 #include "server.h"
-#include "process.h"
+#include "handle.h"
 
 int main(int argc, char *argv[]) {
     int ASport = -1;
@@ -78,7 +78,8 @@ int main(int argc, char *argv[]) {
         buffer[n] = '\0'; // Ensure the buffer is null-terminated
         printf("received: %s\n", buffer);
 
-        errcode = process_request(buffer);
+       // Process request 
+        errcode = handle_request(buffer);
         if(errcode == -1) {
             perror("Error processing request");
             exit(EXIT_FAILURE);
