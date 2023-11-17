@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
             memset(&buffer,0,sizeof(buffer));
             addrlen=sizeof(addr);
             n=recvfrom(fd_udp,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
+            printf("%s\n",buffer);
 
         } else if (connectionType == TCP) {
 
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]) {
             n=read(fd_tcp, buffer, BUFFER_SIZE);
 
         } else if (connectionType == EXIT){
-            if (!loggedIn) exit(0);
+            if (!loggedIn) break;
             else printf("You must logout before exiting\n");
 
         } else {
