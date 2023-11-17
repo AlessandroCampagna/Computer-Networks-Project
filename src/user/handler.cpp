@@ -62,7 +62,7 @@ void diparse_buffer(char* buffer, std::vector<std::string>* tokens) {
     for (auto word :  *tokens) {
         result += word + " ";
     }
-    result += "\n";
+    result.pop_back(); // remove the last space
     std::strcpy(buffer, result.c_str());
 }
 

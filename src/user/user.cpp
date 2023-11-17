@@ -51,14 +51,13 @@ int main(int argc, char *argv[]) {
     while(true){
 
         fgets(buffer, sizeof(buffer), stdin);
-
+    
         ConnectionType connectionType = user_command(buffer);
-        printf("sending: %s", buffer);
 
         if (connectionType == UDP) {
 
             n=sendto(fd_udp,buffer,strlen(buffer),0,res_udp->ai_addr,res_udp->ai_addrlen);
-            printf("sent: %ld\n", n);
+    
             memset(&buffer,0,sizeof buffer);
             addrlen=sizeof(addr);
             n=recvfrom(fd_udp,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
@@ -72,7 +71,7 @@ int main(int argc, char *argv[]) {
             n=read(fd_tcp, buffer, BUFFER_SIZE);
 
         } else if (connectionType == EXIT){
-            if (!loggedIn) return 0;
+            if (!loggedIn) exit(0);
             else printf("You must logout before exiting\n");
 
         } else {
