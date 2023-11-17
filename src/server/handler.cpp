@@ -1,12 +1,13 @@
 #include "server.h"
 
-using CommandFunction = std::function<ConnectionType(std::vector<std::string>*)>;
+using Tokens = std::vector<std::string>;
+using CommandFunction = std::function<ConnectionType(Tokens*)>;
 
-ConnectionType login(std::vector<std::string>*);
-ConnectionType logout(std::vector<std::string>*);
-ConnectionType unregister(std::vector<std::string>*);
-ConnectionType myauctions(std::vector<std::string>*);
-ConnectionType exituser(std::vector<std::string>*);
+ConnectionType login(Tokens*);
+ConnectionType logout(Tokens*);
+ConnectionType unregister(Tokens*);
+ConnectionType myauctions(Tokens*);
+ConnectionType exituser(Tokens*);
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
     {"LIN", login},
@@ -15,14 +16,14 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"LMA", myauctions}
 };
 
-std::vector<std::string> parse_buffer(char *buffer) {
+Tokens parse_buffer(char *buffer) {
 
     // Make the buffer a cpp string
     std::string str(buffer);
     
     // Split the string into tokens
     std::string delimiter = " ";
-    std::vector<std::string> tokens;
+    Tokens tokens;
     std::string token;
     std::istringstream tokenStream(str);
 
@@ -33,14 +34,24 @@ std::vector<std::string> parse_buffer(char *buffer) {
     return tokens;
 }
 
+void diparse_buffer(char* buffer, Tokens* tokens) {
+    std::string result = "";
+    for (auto word :  *tokens) {
+        result += word + " ";
+    }
+    result.pop_back(); // remove the last space
+    strcpy(buffer, result.c_str());
+}
+
 int handle_request(char *buffer) {
 
-    std::vector<std::string> tokens = parse_buffer(buffer);
+    Tokens tokens = parse_buffer(buffer);
     auto it = command_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
     if (it != command_map.end()) {
         ConnectionType result = it->second(&tokens);
+        diparse_buffer(buffer, &tokens);
         return result;
     }
 
@@ -48,22 +59,32 @@ int handle_request(char *buffer) {
     return ConnectionType::INVALID;
 }
 
-ConnectionType login(std::vector<std::string> token) {
+ConnectionType login(Tokens* token) {
+    //TODO: Check if user is already logged in and act acording
+    //TODO: If the user dosent exist register a new one
+    
+    // Create new token for response
+    Tokens response;
+    response.push_back("RLI");
+    response.push_back("OK");
+
+    // Replace token with response
+    *token = response;
     
     return ConnectionType::UDP;
 }
 
-ConnectionType logout(std::vector<std::string> token) {
+ConnectionType logout(Tokens* token) {
     
     return ConnectionType::UDP;
 }
 
-ConnectionType unregister(std::vector<std::string> token) {
+ConnectionType unregister(Tokens* token) {
     
     return ConnectionType::UDP;
 }
 
-ConnectionType myauctions(std::vector<std::string> token) {
+ConnectionType myauctions(Tokens* token) {
     
     return ConnectionType::UDP;
 }
