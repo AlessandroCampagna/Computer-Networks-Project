@@ -30,7 +30,7 @@ Tokens parse_buffer(char *buffer) {
     while (std::getline(tokenStream, token, delimiter[0])) {
         tokens.push_back(token);
     }
-
+    
     return tokens;
 }
 
@@ -43,7 +43,7 @@ void diparse_buffer(char* buffer, Tokens* tokens) {
     strcpy(buffer, result.c_str());
 }
 
-int handle_request(char *buffer) {
+ConnectionType handle_request(char *buffer) {
 
     Tokens tokens = parse_buffer(buffer);
     auto it = command_map.find(tokens[0]);

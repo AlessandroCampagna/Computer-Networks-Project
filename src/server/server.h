@@ -28,12 +28,6 @@ enum ConnectionType {
     INVALID
 };
 
-std::vector<std::string> parse_buffer(char *buffer);
-int handle_request(char *buffer);
-int handle_login(std::vector<std::string> token);
-ConnectionType login(std::vector<std::string> token);
-ConnectionType logout(std::vector<std::string> token);
-ConnectionType unregister(std::vector<std::string> token);
-ConnectionType myauctions(std::vector<std::string> token);
+ConnectionType handle_request(char *buffer);
 
 #endif
