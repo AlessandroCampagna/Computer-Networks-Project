@@ -2,6 +2,9 @@
 
 using CommandFunction = std::function<ConnectionType(std::vector<std::string>*)>;
 
+std::vector<std::string> parse_buffer(char *buffer);
+void diparse_buffer(char* buffer, std::vector<std::string>* tokens);
+
 ConnectionType login(std::vector<std::string>*);
 ConnectionType logout(std::vector<std::string>*);
 ConnectionType unregister(std::vector<std::string>*);
@@ -18,6 +21,23 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"myauctions", myauctions},
     {"exit", exituser}
 };
+
+// Define the user_command function
+ConnectionType user_command(char* buffer) {
+    
+    std::vector<std::string> tokens = parse_buffer(buffer);
+    auto it = command_map.find(tokens[0]);
+
+    // If the command is found, execute the associated function and return its value
+    if (it != command_map.end()) {
+        ConnectionType result = it->second(&tokens);
+        diparse_buffer(buffer, &tokens);
+        return result;
+    }
+
+    // If the command is not found, return an error value
+    return ConnectionType::INVALID;
+}
 
 std::vector<std::string> parse_buffer(char *buffer) {
 
@@ -37,20 +57,13 @@ std::vector<std::string> parse_buffer(char *buffer) {
     return tokens;
 }
 
-// Define the user_command function
-ConnectionType user_command(char* buffer) {
-    
-    std::vector<std::string> tokens = parse_buffer(buffer);
-    auto it = command_map.find(tokens[0]);
-
-    // If the command is found, execute the associated function and return its value
-    if (it != command_map.end()) {
-        ConnectionType result = it->second(&tokens);
-        return result;
+void diparse_buffer(char* buffer, std::vector<std::string>* tokens) {
+    std::string result = "";
+    for (auto word :  *tokens) {
+        result += word + " ";
     }
-
-    // If the command is not found, return an error value
-    return ConnectionType::INVALID;
+    result += "\n";
+    std::strcpy(buffer, result.c_str());
 }
 
 // Define the functions for each command
