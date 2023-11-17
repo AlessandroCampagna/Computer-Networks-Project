@@ -1,15 +1,16 @@
 #include "user.h"
 
-using CommandFunction = std::function<ConnectionType(std::vector<std::string>*)>;
+using Tokens = std::vector<std::string>;
+using CommandFunction = std::function<ConnectionType(Tokens*)>;
 
-std::vector<std::string> parse_buffer(char *buffer);
-void diparse_buffer(char* buffer, std::vector<std::string>* tokens);
+Tokens parse_buffer(char *buffer);
+void diparse_buffer(char* buffer, Tokens* tokens);
 
-ConnectionType login(std::vector<std::string>*);
-ConnectionType logout(std::vector<std::string>*);
-ConnectionType unregister(std::vector<std::string>*);
-ConnectionType myauctions(std::vector<std::string>*);
-ConnectionType exituser(std::vector<std::string>*);
+ConnectionType login(Tokens*);
+ConnectionType logout(Tokens*);
+ConnectionType unregister(Tokens*);
+ConnectionType myauctions(Tokens*);
+ConnectionType exituser(Tokens*);
 
 std::string uid;
 std::string password;
@@ -25,7 +26,7 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
 // Define the user_command function
 ConnectionType user_command(char* buffer) {
     
-    std::vector<std::string> tokens = parse_buffer(buffer);
+    Tokens tokens = parse_buffer(buffer);
     auto it = command_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
@@ -39,14 +40,14 @@ ConnectionType user_command(char* buffer) {
     return ConnectionType::INVALID;
 }
 
-std::vector<std::string> parse_buffer(char *buffer) {
+Tokens parse_buffer(char *buffer) {
 
     // Make the buffer a cpp string
     std::string str(buffer);
     
     // Split the string into tokens
     std::string delimiter = " ";
-    std::vector<std::string> tokens;
+    Tokens tokens;
     std::string token;
     std::istringstream tokenStream(str);
 
@@ -57,7 +58,7 @@ std::vector<std::string> parse_buffer(char *buffer) {
     return tokens;
 }
 
-void diparse_buffer(char* buffer, std::vector<std::string>* tokens) {
+void diparse_buffer(char* buffer, Tokens* tokens) {
     std::string result = "";
     for (auto word :  *tokens) {
         result += word + " ";
@@ -67,34 +68,41 @@ void diparse_buffer(char* buffer, std::vector<std::string>* tokens) {
 }
 
 // Define the functions for each command
-ConnectionType login(std::vector<std::string>* tokens) {
+ConnectionType login(Tokens* tokens) {
     (*tokens)[0] = "LIN";
     std::string uid = (*tokens)[1];
     std::string password = (*tokens)[2];
     return ConnectionType::UDP;
 }
 
-ConnectionType logout(std::vector<std::string>* tokens) {
-    (*tokens)[0] = "LIN";
+std::string login_response(char* buffer) {
+    Tokens tokens = parse_buffer(buffer);
+    if (tokens[1] == "OK"){
+        return 0;
+    }
+}
+
+ConnectionType logout(Tokens* tokens) {
+    (*tokens)[0] = "LOU";
     std::string uid = (*tokens)[1];
     std::string password = (*tokens)[2];
     return ConnectionType::UDP;
 }
 
-ConnectionType unregister(std::vector<std::string>* tokens) {
-    (*tokens)[0] = "LIN";
+ConnectionType unregister(Tokens* tokens) {
+    (*tokens)[0] = "UNR";
     std::string uid = (*tokens)[1];
     std::string password = (*tokens)[2];
     return ConnectionType::UDP;
 }
-ConnectionType myauctions(std::vector<std::string>* tokens) {
-    (*tokens)[0] = "LIN";
+ConnectionType myauctions(Tokens* tokens) {
+    (*tokens)[0] = "LMA";
     std::string uid = (*tokens)[1];
     std::string password = (*tokens)[2];
     return ConnectionType::UDP;
 }
 
-ConnectionType exituser(std::vector<std::string>* tokens) {
+ConnectionType exituser(Tokens* tokens) {
     return ConnectionType::EXIT;
 }
 
