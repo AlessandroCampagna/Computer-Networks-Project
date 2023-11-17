@@ -4,8 +4,10 @@ int main(int argc, char *argv[]) {
     char *ASIP = NULL;
     int ASport = -1;
     char ASportStr[6]; //TODO check if this is the right size
-    int GN = 17;
-    bool loggedIn = false;
+
+    std::string uid;
+    std::string password;
+    bool logged=false;
 
     int fd_udp, fd_tcp;
     ssize_t n;
@@ -31,7 +33,7 @@ int main(int argc, char *argv[]) {
 
     // Default settings
     if (ASIP == NULL) ASIP = strdup("localhost"); // default IP
-    if (ASport == -1) ASport = PORT + GN; // default port
+    if (ASport == -1) ASport = PORT; // default port
     sprintf(ASportStr, "%d", ASport); // convert port to string
 
     fd_udp=socket(AF_INET,SOCK_DGRAM,0); //UDP socket
@@ -52,7 +54,7 @@ int main(int argc, char *argv[]) {
 
         fgets(buffer, sizeof(buffer), stdin);
     
-        ConnectionType connectionType = user_command(buffer);
+        ConnectionType connectionType = handle_command(buffer);
 
         if (connectionType == UDP) {
 
@@ -61,17 +63,18 @@ int main(int argc, char *argv[]) {
             memset(&buffer,0,sizeof buffer);
             addrlen=sizeof(addr);
             n=recvfrom(fd_udp,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
-            printf("%s\n",buffer);
+            handle_response(buffer);
 
         } else if (connectionType == TCP) {
 
             n=connect(fd_tcp,res_tcp->ai_addr,res_tcp->ai_addrlen);
+            if (n==-1) exit(1);
             write(fd_tcp, buffer, strlen(buffer));
             memset(&buffer,0,sizeof(buffer));
             n=read(fd_tcp, buffer, BUFFER_SIZE);
 
         } else if (connectionType == EXIT){
-            if (!loggedIn) exit(0);
+            if (!logged) exit(0);
             else printf("You must logout before exiting\n");
 
         } else {

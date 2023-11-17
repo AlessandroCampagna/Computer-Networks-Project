@@ -19,8 +19,12 @@
 #include <sstream>
 
 
-#define PORT 58000
+#define PORT 58017
 #define BUFFER_SIZE 128
+
+extern std::string uid;
+extern std::string password;
+extern bool logged;
 
 enum ConnectionType {
     UDP,
@@ -29,6 +33,7 @@ enum ConnectionType {
     INVALID
 };
 
-ConnectionType user_command(char* buffer);
+ConnectionType handle_command(char* buffer);
+void handle_response(char* buffer);
 
 #endif
