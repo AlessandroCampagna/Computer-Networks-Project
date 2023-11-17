@@ -78,11 +78,8 @@ ConnectionType login(Tokens* tokens) {
 std::string login_response(char* buffer) {
     Tokens tokens = parse_buffer(buffer);
     if (tokens[1] == "OK"){
-        return "successful login";
-    } else if (tokens[1] == "NOK"){
-        return "unsuccessful login";
-    } else {
-        return "invalid response";
+        return 0;
+    }
 }
 
 ConnectionType logout(Tokens* tokens) {
