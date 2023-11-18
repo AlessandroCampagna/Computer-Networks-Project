@@ -99,12 +99,12 @@ ConnectionType login(Tokens* tokens) {
 
 void login_response(Tokens* tokens) {
     
-    if ((*tokens)[0] == "OK") {
+    if ((*tokens)[1] == "OK") {
         printf("successful login\n");
         logged = true;
-    } else if ((*tokens)[0] == "NOK") {
+    } else if ((*tokens)[1] == "NOK") {
         printf("incorrect login attempt\n");
-    } else if ((*tokens)[0] == "REG") {
+    } else if ((*tokens)[1] == "REG") {
         printf("new user registered\n");
     } else {
         printf("unknown response\n");
@@ -119,12 +119,12 @@ ConnectionType logout(Tokens* tokens) {
 }
 
 void logout_response(Tokens* tokens) {
-    if ((*tokens)[0] == "OK") {
+    if ((*tokens)[1] == "OK") {
         printf("successful logout\n");
         logged = false;
-    } else if ((*tokens)[0] == "NOK") {
+    } else if ((*tokens)[1] == "NOK") {
         printf("user not logged in\n");
-    } else if ((*tokens)[0] == "UNR") {
+    } else if ((*tokens)[1] == "UNR") {
         printf("unknown user\n");
     } else {
         printf("unknown response\n");
@@ -140,11 +140,11 @@ ConnectionType unregister(Tokens* tokens) {
 
 void unregister_response(Tokens* tokens) {
     
-    if ((*tokens)[0] == "OK") {
+    if ((*tokens)[1] == "OK") {
         printf("successful unregister\n");
-    } else if ((*tokens)[0] == "NOK") {
+    } else if ((*tokens)[1] == "NOK") {
         printf("incorrect unregister attempt\n");
-    } else if ((*tokens)[0] == "UNR") {
+    } else if ((*tokens)[1] == "UNR") {
         printf("unknown user\n");
     } else {
         printf("unknown response\n");
@@ -161,13 +161,13 @@ ConnectionType myauctions(Tokens* tokens) {
 
 void myauctions_response(Tokens* tokens) {
     
-    if ((*tokens)[0] == "OK") {
+    if ((*tokens)[1] == "OK") {
         for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
             printf("%s\n", it->c_str());
         }
-    } else if ((*tokens)[0] == "NOK") {
+    } else if ((*tokens)[1] == "NOK") {
         printf("user has no ongoing auctions\n");
-    } else if ((*tokens)[0] == "NLG") {
+    } else if ((*tokens)[1] == "NLG") {
         printf("user not logged in\n");
     } else {
         printf("unknown response\n");
