@@ -19,6 +19,8 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"unregister", unregister},
     {"myauctions", myauctions},
     {"ma", myauctions},
+    {"mybids", mybids},
+    {"mb", mybids},
     {"exit", exituser}
 };
 
@@ -92,8 +94,8 @@ void diparse_buffer(char* buffer, Tokens* tokens) {
 // Define the functions for each command
 ConnectionType login(Tokens* tokens) {
     (*tokens)[0] = "LIN";
-    std::string uid = (*tokens)[1];
-    std::string password = (*tokens)[2];
+    uid = (*tokens)[1];
+    password = (*tokens)[2];
     return ConnectionType::UDP;
 }
 
@@ -113,8 +115,8 @@ void login_response(Tokens* tokens) {
 
 ConnectionType logout(Tokens* tokens) {
     (*tokens)[0] = "LOU";
-    std::string uid = (*tokens)[1];
-    std::string password = (*tokens)[2];
+    tokens->push_back(uid);
+    tokens->push_back(password);
     return ConnectionType::UDP;
 }
 
@@ -133,8 +135,8 @@ void logout_response(Tokens* tokens) {
 
 ConnectionType unregister(Tokens* tokens) {
     (*tokens)[0] = "UNR";
-    std::string uid = (*tokens)[1];
-    std::string password = (*tokens)[2];
+    tokens->push_back(uid);
+    tokens->push_back(password);
     return ConnectionType::UDP;
 }
 
@@ -154,8 +156,7 @@ void unregister_response(Tokens* tokens) {
 
 ConnectionType myauctions(Tokens* tokens) {
     (*tokens)[0] = "LMA";
-    std::string uid = (*tokens)[1];
-    std::string password = (*tokens)[2];
+    tokens->push_back(uid);
     return ConnectionType::UDP;
 }
 
@@ -172,6 +173,16 @@ void myauctions_response(Tokens* tokens) {
     } else {
         printf("unknown response\n");
     }
+}
+
+ConnectionType mybids(Tokens* token){
+    (*tokens)[0] = "LMB";
+    token->push_back(uid);
+    return ConnectionType::UDP
+}
+
+void mybids_response(Tokens* tokens){
+
 }
 
 ConnectionType exituser(Tokens* tokens) {
