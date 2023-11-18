@@ -74,7 +74,6 @@ int main(int argc, char *argv[]) {
         }
     
         // Print received message    
-        buffer[n] = '\0'; // Ensure the buffer is null-terminated
         printf("received: %s\n", buffer);
 
         // Process request 
@@ -85,6 +84,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Echo back
+        printf("sending: %s\n", buffer);
 	    n = sendto(fd, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
         if(n == -1) {
             perror("Error echoing message");

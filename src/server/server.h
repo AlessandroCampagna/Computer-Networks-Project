@@ -8,7 +8,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <string.h>
 #include <stdio.h>
 #include <vector>
 #include <sstream>
@@ -16,10 +15,15 @@
 #include <cstdio>
 #include <unordered_map>
 #include <functional>
+#include <filesystem>
+#include <fstream>
+#include <cstring>
 
 #define BUFFER_SIZE 128
 #define PORT 58000
 #define GROUP_NUMBER 17
+
+#define ASDIR_PATH "../../ASDIR/"
 
 enum ConnectionType {
     UDP,

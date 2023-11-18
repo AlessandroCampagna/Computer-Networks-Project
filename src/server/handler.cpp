@@ -1,5 +1,7 @@
 #include "server.h"
 
+namespace fs = std::filesystem;
+
 using Tokens = std::vector<std::string>;
 using CommandFunction = std::function<ConnectionType(Tokens*)>;
 
@@ -40,7 +42,7 @@ void diparse_buffer(char* buffer, Tokens* tokens) {
         result += word + " ";
     }
     result.pop_back(); // remove the last space
-    strcpy(buffer, result.c_str());
+    std::strcpy(buffer, result.c_str());
 }
 
 ConnectionType handle_request(char *buffer) {
@@ -60,13 +62,30 @@ ConnectionType handle_request(char *buffer) {
 }
 
 ConnectionType login(Tokens* token) {
-    //TODO: Check if user is already logged in and act acording
-    //TODO: If the user dosent exist register a new one
-    
     // Create new token for response
     Tokens response;
-    response.push_back("RLI");
-    response.push_back("OK");
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
+
+    //Check if the user exists in the database
+    if (!fs::exists(ASDIR_PATH + uid)) {
+        fs::create_directories(uid);
+        response.push_back("RLI");
+        response.push_back("REG");
+    } else {
+        //Check if the password is correct
+        std::ifstream file(ASDIR_PATH + uid + "/" + password + "_pass.txt");
+        std::string correct_password;
+        std::getline(file, correct_password);
+        if (password != correct_password) {
+            response.push_back("RLI");
+            response.push_back("NOK");
+        } else {
+            response.push_back("RLI");
+            response.push_back("OK");
+        }
+    }
 
     // Replace token with response
     *token = response;
