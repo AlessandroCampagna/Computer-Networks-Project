@@ -23,8 +23,6 @@
 #define PORT 58000
 #define GROUP_NUMBER 17
 
-#define ASDIR_PATH "../../ASDIR/"
-
 enum ConnectionType {
     UDP,
     TCP,

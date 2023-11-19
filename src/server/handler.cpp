@@ -1,6 +1,5 @@
 #include "server.h"
-
-namespace fs = std::filesystem;
+#include "data.h"
 
 using Tokens = std::vector<std::string>;
 using CommandFunction = std::function<ConnectionType(Tokens*)>;
@@ -69,16 +68,14 @@ ConnectionType login(Tokens* token) {
     std::string password = (*token)[2];
 
     //Check if the user exists in the database
-    if (!fs::exists(ASDIR_PATH + uid)) {
-        fs::create_directories(uid);
+    if (isUser(uid) == 0) {
+        createUser(uid, password);
         response.push_back("RLI");
         response.push_back("REG");
+    // Not loged in
     } else {
         //Check if the password is correct
-        std::ifstream file(ASDIR_PATH + uid + "/" + password + "_pass.txt");
-        std::string correct_password;
-        std::getline(file, correct_password);
-        if (password != correct_password) {
+        if (isPassword(uid, password) == 0) {
             response.push_back("RLI");
             response.push_back("NOK");
         } else {
@@ -94,7 +91,27 @@ ConnectionType login(Tokens* token) {
 }
 
 ConnectionType logout(Tokens* token) {
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
     
+    //Check if the user dose not exists in the database
+    if (isUser(uid) == 1) {
+        response.push_back("LOU");
+        response.push_back("UNR"); 
+    } else if (isLogin(uid) == 0) {
+        response.push_back("LOU");
+        response.push_back("NOK"); 
+    } else {
+        logoutUser(uid);
+        response.push_back("LOU");
+        response.push_back("OK");
+    }
+
+    *token = response;
+
     return ConnectionType::UDP;
 }
 
