@@ -11,6 +11,9 @@ ConnectionType login(Tokens*); void login_response(Tokens*);
 ConnectionType logout(Tokens*); void logout_response(Tokens*);
 ConnectionType unregister(Tokens*); void unregister_response(Tokens*);
 ConnectionType myauctions(Tokens*); void myauctions_response(Tokens*);
+ConnectionType mybids(Tokens*); void mybids_response(Tokens*);
+ConnectionType list(Tokens*); void list_response(Tokens*);
+ConnectionType show_record(Tokens*); void show_record_response(Tokens*);
 ConnectionType exituser(Tokens*);
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
@@ -182,9 +185,9 @@ void myauctions_response(Tokens* tokens) {
     }
 }
 
-ConnectionType mybids(Tokens* token){
+ConnectionType mybids(Tokens* tokens){
     (*tokens)[0] = "LMB";
-    token->push_back(uid);
+    tokens->push_back(uid);
     return ConnectionType::UDP;
 }
 
@@ -208,7 +211,7 @@ ConnectionType list(Tokens* tokens){
     return ConnectionType::UDP;
 }
 
-void list_response(Tokens* token){
+void list_response(Tokens* tokens){
      if ((*tokens)[1] == "OK") {
         for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
             printf("%s\n", it->c_str());
@@ -220,13 +223,13 @@ void list_response(Tokens* token){
     }
 }
 
-ConnectionType show_record(Tokens* token){
+ConnectionType show_record(Tokens* tokens){
     (*tokens)[0] = "SRC";
     return ConnectionType::UDP;
 }
 
 void  show_record_response(Tokens* token){
-    
+
 }
 
 ConnectionType exituser(Tokens* tokens) {

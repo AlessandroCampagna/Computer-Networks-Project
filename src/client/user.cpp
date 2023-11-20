@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     hints_udp.ai_family=AF_INET; //IPv4
     hints_udp.ai_socktype=SOCK_DGRAM; //UDP socket
 
-    errcode = getaddrinfo(ASIP,ASportStr,&hints_udp,&res_udp); if(errcode!=0) /*error*/ exit("EXIT_FAILURE");
+    errcode = getaddrinfo(ASIP,ASportStr,&hints_udp,&res_udp); if(errcode!=0) /*error*/ exit(1);
 
     while(true){
 
@@ -49,13 +49,13 @@ int main(int argc, char *argv[]) {
         if (connectionType == UDP) {
 
             n=sendto(fd_udp,buffer,strlen(buffer),0,res_udp->ai_addr,res_udp->ai_addrlen);
-            if(n==-1) /*error*/ exit("EXIT_FAILURE");
+            if(n==-1) /*error*/ exit(1);
     
             memset(&buffer,0,sizeof buffer);
             addrlen=sizeof(addr);
 
             n=recvfrom(fd_udp,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
-            if(n==-1) /*error*/ exit("EXIT_FAILURE");
+            if(n==-1) /*error*/ exit(1);
 
             handle_response(buffer);
 
@@ -67,18 +67,18 @@ int main(int argc, char *argv[]) {
             hints_tcp.ai_family=AF_INET; //IPv4
             hints_tcp.ai_socktype=SOCK_STREAM; //TCP socket
 
-            errcode = getaddrinfo(ASIP,ASportStr,&hints_tcp,&res_tcp); if(errcode!=0) /*error*/ exit("EXIT_FAILURE");
+            errcode = getaddrinfo(ASIP,ASportStr,&hints_tcp,&res_tcp); if(errcode!=0) /*error*/ exit(1);
 
             n=connect(fd_tcp,res_tcp->ai_addr,res_tcp->ai_addrlen);
-            if(n==-1) /*error*/ exit("EXIT_FAILURE");
+            if(n==-1) /*error*/ exit(1);
 
             n=write(fd_tcp, buffer, strlen(buffer));
-            if(n==-1) /*error*/ exit("EXIT_FAILURE");
+            if(n==-1) /*error*/ exit(1);
 
             memset(&buffer,0,sizeof(buffer));
 
             n=read(fd_tcp, buffer, BUFFER_SIZE);
-            if(n==-1) /*error*/ exit("EXIT_FAILURE");
+            if(n==-1) /*error*/ exit(1);
 
         } else if (connectionType == EXIT){
             if (!logged) exit(1);
