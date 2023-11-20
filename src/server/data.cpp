@@ -2,6 +2,7 @@
 
 namespace fs = std::filesystem;
 
+// User functions
 int isUser(std::string uid) {
     // Check if user directory exists
     if (fs::exists(USER_PATH + uid)) return 1;
@@ -22,7 +23,8 @@ int createUser(std::string uid, std::string password) {
 
 int removeUser(std::string uid) {
     // Remove user directory
-    fs::remove_all(USER_PATH + uid);
+    fs::remove_all(USER_PATH + uid + "/" + uid + "_pass.txt");
+    fs::remove_all(USER_PATH + uid + "/" + uid + "_login.txt");
 
     return 0;
 }
@@ -51,3 +53,5 @@ int logoutUser(std::string uid) {
 
     return 0;
 }
+
+// Auction fucntions
