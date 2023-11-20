@@ -21,6 +21,10 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"ma", myauctions},
     {"mybids", mybids},
     {"mb", mybids},
+    {"list", list},
+    {"l", list},
+    {"show_record", show_record},
+    {"sr", show_record},
     {"exit", exituser}
 };
 
@@ -28,7 +32,10 @@ const std::unordered_map<std::string, ResponseFunction> response_map = {
     {"RLI", login_response},
     {"RLO", logout_response},
     {"RUR", unregister_response},
-    {"RMA", myauctions_response}
+    {"RMA", myauctions_response},
+    {"RMB", mybids_response},
+    {"RLS", list_response},
+    {"RRC", show_record_response}
 };
 
 std::string uid;
@@ -178,11 +185,48 @@ void myauctions_response(Tokens* tokens) {
 ConnectionType mybids(Tokens* token){
     (*tokens)[0] = "LMB";
     token->push_back(uid);
-    return ConnectionType::UDP
+    return ConnectionType::UDP;
 }
 
 void mybids_response(Tokens* tokens){
+    
+    if ((*tokens)[1] == "OK") {
+        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
+            printf("%s\n", it->c_str());
+        }
+    } else if ((*tokens)[1] == "NOK") {
+        printf("user has no ongoing bids\n");
+    } else if ((*tokens)[1] == "NLG") {
+        printf("user not logged in\n");
+    } else {
+        printf("unknown response\n");
+    }
+}
 
+ConnectionType list(Tokens* tokens){
+    (*tokens)[0] = "LST";
+    return ConnectionType::UDP;
+}
+
+void list_response(Tokens* token){
+     if ((*tokens)[1] == "OK") {
+        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
+            printf("%s\n", it->c_str());
+        }
+    } else if ((*tokens)[1] == "NOK") {
+        printf("no auctions are currently active\n");
+    } else {
+        printf("unknown response\n");
+    }
+}
+
+ConnectionType show_record(Tokens* token){
+    (*tokens)[0] = "SRC";
+    return ConnectionType::UDP;
+}
+
+void  show_record_response(Tokens* token){
+    
 }
 
 ConnectionType exituser(Tokens* tokens) {
