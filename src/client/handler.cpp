@@ -114,7 +114,6 @@ ConnectionType login(Tokens* tokens) {
 }
 
 void login_response(Tokens* tokens) {
-
     if ((*tokens)[1] == "OK") {
         printf("successful login\n");
         logged = true;

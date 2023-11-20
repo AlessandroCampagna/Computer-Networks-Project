@@ -8,7 +8,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <string.h>
 #include <stdio.h>
 #include <vector>
 #include <sstream>
@@ -16,6 +15,9 @@
 #include <cstdio>
 #include <unordered_map>
 #include <functional>
+#include <filesystem>
+#include <fstream>
+#include <cstring>
 
 #define BUFFER_SIZE 128
 #define PORT 58000
@@ -28,12 +30,6 @@ enum ConnectionType {
     INVALID
 };
 
-std::vector<std::string> parse_buffer(char *buffer);
-int handle_request(char *buffer);
-int handle_login(std::vector<std::string> token);
-ConnectionType login(std::vector<std::string> token);
-ConnectionType logout(std::vector<std::string> token);
-ConnectionType unregister(std::vector<std::string> token);
-ConnectionType myauctions(std::vector<std::string> token);
+ConnectionType handle_request(char *buffer);
 
 #endif

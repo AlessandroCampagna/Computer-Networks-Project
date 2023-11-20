@@ -74,17 +74,17 @@ int main(int argc, char *argv[]) {
         }
     
         // Print received message    
-        buffer[n] = '\0'; // Ensure the buffer is null-terminated
         printf("received: %s\n", buffer);
 
-       // Process request 
-        errcode = handle_request(buffer);
+        // Process request 
+        ConnectionType connectionType = handle_request(buffer);
         if(errcode == -1) {
             perror("Error processing request");
             exit(EXIT_FAILURE);
         }
 
         // Echo back
+        printf("sending: %s\n", buffer);
 	    n = sendto(fd, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
         if(n == -1) {
             perror("Error echoing message");

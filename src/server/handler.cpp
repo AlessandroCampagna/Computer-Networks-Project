@@ -1,12 +1,14 @@
 #include "server.h"
+#include "data.h"
 
-using CommandFunction = std::function<ConnectionType(std::vector<std::string>*)>;
+using Tokens = std::vector<std::string>;
+using CommandFunction = std::function<ConnectionType(Tokens*)>;
 
-ConnectionType login(std::vector<std::string>*);
-ConnectionType logout(std::vector<std::string>*);
-ConnectionType unregister(std::vector<std::string>*);
-ConnectionType myauctions(std::vector<std::string>*);
-ConnectionType exituser(std::vector<std::string>*);
+ConnectionType login(Tokens*);
+ConnectionType logout(Tokens*);
+ConnectionType unregister(Tokens*);
+ConnectionType myauctions(Tokens*);
+ConnectionType exituser(Tokens*);
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
     {"LIN", login},
@@ -15,32 +17,42 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"LMA", myauctions}
 };
 
-std::vector<std::string> parse_buffer(char *buffer) {
+Tokens parse_buffer(char *buffer) {
 
     // Make the buffer a cpp string
     std::string str(buffer);
     
     // Split the string into tokens
     std::string delimiter = " ";
-    std::vector<std::string> tokens;
+    Tokens tokens;
     std::string token;
     std::istringstream tokenStream(str);
 
     while (std::getline(tokenStream, token, delimiter[0])) {
         tokens.push_back(token);
     }
-
+    
     return tokens;
 }
 
-int handle_request(char *buffer) {
+void diparse_buffer(char* buffer, Tokens* tokens) {
+    std::string result = "";
+    for (auto word :  *tokens) {
+        result += word + " ";
+    }
+    result.pop_back(); // remove the last space
+    std::strcpy(buffer, result.c_str());
+}
 
-    std::vector<std::string> tokens = parse_buffer(buffer);
+ConnectionType handle_request(char *buffer) {
+
+    Tokens tokens = parse_buffer(buffer);
     auto it = command_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
     if (it != command_map.end()) {
         ConnectionType result = it->second(&tokens);
+        diparse_buffer(buffer, &tokens);
         return result;
     }
 
@@ -48,23 +60,88 @@ int handle_request(char *buffer) {
     return ConnectionType::INVALID;
 }
 
-ConnectionType login(std::vector<std::string> token) {
+ConnectionType login(Tokens* token) {
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
+
+    //Check if the user exists in the database
+    if (isUser(uid) == false) {
+        createUser(uid, password);
+        loginUser(uid);
+        response.push_back("RLI");
+        response.push_back("REG");
+    // Not loged in
+    } else {
+        //Check if the password is correct
+        if (isPassword(uid, password) == false) {
+            response.push_back("RLI");
+            response.push_back("NOK");
+        } else {
+            loginUser(uid);
+            response.push_back("RLI");
+            response.push_back("OK");
+        }
+    }
+
+    // Replace token with response
+    *token = response;
     
     return ConnectionType::UDP;
 }
 
-ConnectionType logout(std::vector<std::string> token) {
+ConnectionType logout(Tokens* token) {
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
     
+    //Check if the user dose not exists in the database
+    if (isUser(uid) == false) {
+        response.push_back("LOU");
+        response.push_back("UNR"); 
+    } else if (isLogin(uid) == false) {
+        response.push_back("LOU");
+        response.push_back("NOK"); 
+    } else {
+        logoutUser(uid);
+        response.push_back("LOU");
+        response.push_back("OK");
+    }
+
+    *token = response;
+
     return ConnectionType::UDP;
 }
 
-ConnectionType unregister(std::vector<std::string> token) {
-    
+ConnectionType unregister(Tokens* token) {
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
+
+    //Check if the user dose not exists in the database
+    if (isUser(uid) == false) {
+        response.push_back("UNR");
+        response.push_back("UNR"); 
+    } else if (isPassword(uid, password) == false) {
+        response.push_back("UNR");
+        response.push_back("NOK"); 
+    } else {
+        removeUser(uid);
+        response.push_back("UNR");
+        response.push_back("OK");
+    }
+
+    *token = response;
     return ConnectionType::UDP;
 }
 
-ConnectionType myauctions(std::vector<std::string> token) {
+ConnectionType myauctions(Tokens* token) {
     
     return ConnectionType::UDP;
 }
-

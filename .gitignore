@@ -33,3 +33,7 @@
 
 # Vscode
 .vscode
+
+# Database
+ASDIR/AUCTIONS/*
+ASDIR/USERS/*
