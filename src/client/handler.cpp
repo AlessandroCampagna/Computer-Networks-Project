@@ -11,6 +11,9 @@ ConnectionType login(Tokens*); void login_response(Tokens*);
 ConnectionType logout(Tokens*); void logout_response(Tokens*);
 ConnectionType unregister(Tokens*); void unregister_response(Tokens*);
 ConnectionType myauctions(Tokens*); void myauctions_response(Tokens*);
+ConnectionType mybids(Tokens*); void mybids_response(Tokens*);
+ConnectionType list(Tokens*); void list_response(Tokens*);
+ConnectionType show_record(Tokens*); void show_record_response(Tokens*);
 ConnectionType exituser(Tokens*);
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
@@ -19,6 +22,12 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"unregister", unregister},
     {"myauctions", myauctions},
     {"ma", myauctions},
+    {"mybids", mybids},
+    {"mb", mybids},
+    {"list", list},
+    {"l", list},
+    {"show_record", show_record},
+    {"sr", show_record},
     {"exit", exituser}
 };
 
@@ -26,7 +35,10 @@ const std::unordered_map<std::string, ResponseFunction> response_map = {
     {"RLI", login_response},
     {"RLO", logout_response},
     {"RUR", unregister_response},
-    {"RMA", myauctions_response}
+    {"RMA", myauctions_response},
+    {"RMB", mybids_response},
+    {"RLS", list_response},
+    {"RRC", show_record_response}
 };
 
 std::string uid;
@@ -34,8 +46,10 @@ std::string password;
 bool logged=false;
 
 ConnectionType handle_command(char* buffer) {
-    
+
+    buffer[strlen(buffer)-1] = '\0'; // remove the last \n
     Tokens tokens = parse_buffer(buffer);
+    
     auto it = command_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
@@ -51,9 +65,8 @@ ConnectionType handle_command(char* buffer) {
 
 void handle_response(char* buffer){
     
+    buffer[strlen(buffer)-1] = '\0'; // remove the last \n
     Tokens tokens = parse_buffer(buffer);
-    printf("response: %s\n", tokens[0].c_str());
-    printf("response: %s\n", tokens[1].c_str());
     auto it = response_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
@@ -88,19 +101,19 @@ void diparse_buffer(char* buffer, Tokens* tokens) {
         result += word + " ";
     }
     result.pop_back(); // remove the last space
+    result += "\n";
     std::strcpy(buffer, result.c_str());
 }
 
 // Define the functions for each command
 ConnectionType login(Tokens* tokens) {
     (*tokens)[0] = "LIN";
-    std::string uid = (*tokens)[1];
-    std::string password = (*tokens)[2];
+    uid = (*tokens)[1];
+    password = (*tokens)[2];
     return ConnectionType::UDP;
 }
 
 void login_response(Tokens* tokens) {
-    
     if ((*tokens)[1] == "OK") {
         printf("successful login\n");
         logged = true;
@@ -115,8 +128,8 @@ void login_response(Tokens* tokens) {
 
 ConnectionType logout(Tokens* tokens) {
     (*tokens)[0] = "LOU";
-    std::string uid = (*tokens)[1];
-    std::string password = (*tokens)[2];
+    tokens->push_back(uid);
+    tokens->push_back(password);
     return ConnectionType::UDP;
 }
 
@@ -135,8 +148,8 @@ void logout_response(Tokens* tokens) {
 
 ConnectionType unregister(Tokens* tokens) {
     (*tokens)[0] = "UNR";
-    std::string uid = (*tokens)[1];
-    std::string password = (*tokens)[2];
+    tokens->push_back(uid);
+    tokens->push_back(password);
     return ConnectionType::UDP;
 }
 
@@ -156,8 +169,7 @@ void unregister_response(Tokens* tokens) {
 
 ConnectionType myauctions(Tokens* tokens) {
     (*tokens)[0] = "LMA";
-    std::string uid = (*tokens)[1];
-    std::string password = (*tokens)[2];
+    tokens->push_back(uid);
     return ConnectionType::UDP;
 }
 
@@ -174,6 +186,53 @@ void myauctions_response(Tokens* tokens) {
     } else {
         printf("unknown response\n");
     }
+}
+
+ConnectionType mybids(Tokens* tokens){
+    (*tokens)[0] = "LMB";
+    tokens->push_back(uid);
+    return ConnectionType::UDP;
+}
+
+void mybids_response(Tokens* tokens){
+    
+    if ((*tokens)[1] == "OK") {
+        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
+            printf("%s\n", it->c_str());
+        }
+    } else if ((*tokens)[1] == "NOK") {
+        printf("user has no ongoing bids\n");
+    } else if ((*tokens)[1] == "NLG") {
+        printf("user not logged in\n");
+    } else {
+        printf("unknown response\n");
+    }
+}
+
+ConnectionType list(Tokens* tokens){
+    (*tokens)[0] = "LST";
+    return ConnectionType::UDP;
+}
+
+void list_response(Tokens* tokens){
+     if ((*tokens)[1] == "OK") {
+        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
+            printf("%s\n", it->c_str());
+        }
+    } else if ((*tokens)[1] == "NOK") {
+        printf("no auctions are currently active\n");
+    } else {
+        printf("unknown response\n");
+    }
+}
+
+ConnectionType show_record(Tokens* tokens){
+    (*tokens)[0] = "SRC";
+    return ConnectionType::UDP;
+}
+
+void  show_record_response(Tokens* token){
+
 }
 
 ConnectionType exituser(Tokens* tokens) {
