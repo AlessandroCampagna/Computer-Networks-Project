@@ -9,4 +9,11 @@ $(SUBDIRS):
 	mv $@/*.o .
 
 clean:
-	rm -f *.o
+	@for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir clean; \
+	done
+
+test:
+	@for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir test; \
+	done

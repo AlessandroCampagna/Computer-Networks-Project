@@ -10,3 +10,6 @@ run:
 	$(CC) $(CFLAGS) -o $(OUTDIR)/server.o data.cpp handler.cpp server.cpp
 	clear
 	./server.o
+
+test:
+	$(CC) $(CFLAGS) -o server.o data.cpp handler.cpp server.cpp
