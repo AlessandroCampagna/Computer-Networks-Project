@@ -57,6 +57,7 @@ int main(int argc, char *argv[]) {
             n=recvfrom(fd_udp,buffer,BUFFER_SIZE,0,(struct sockaddr*)&addr,&addrlen);
             if(n==-1) /*error*/ exit(1);
 
+            printf("%s\n",buffer);
             handle_response(buffer);
 
         } else if (connectionType == TCP) {

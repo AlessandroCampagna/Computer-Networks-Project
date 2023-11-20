@@ -46,8 +46,10 @@ std::string password;
 bool logged=false;
 
 ConnectionType handle_command(char* buffer) {
-    
+
+    buffer[strlen(buffer)-1] = '\0'; // remove the last \n
     Tokens tokens = parse_buffer(buffer);
+    
     auto it = command_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
@@ -63,6 +65,7 @@ ConnectionType handle_command(char* buffer) {
 
 void handle_response(char* buffer){
     
+    buffer[strlen(buffer)-1] = '\0'; // remove the last \n
     Tokens tokens = parse_buffer(buffer);
     auto it = response_map.find(tokens[0]);
 
@@ -98,6 +101,7 @@ void diparse_buffer(char* buffer, Tokens* tokens) {
         result += word + " ";
     }
     result.pop_back(); // remove the last space
+    result += "\n";
     std::strcpy(buffer, result.c_str());
 }
 
@@ -110,7 +114,7 @@ ConnectionType login(Tokens* tokens) {
 }
 
 void login_response(Tokens* tokens) {
-    
+
     if ((*tokens)[1] == "OK") {
         printf("successful login\n");
         logged = true;
