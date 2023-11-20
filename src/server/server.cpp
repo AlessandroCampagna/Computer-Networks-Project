@@ -1,11 +1,10 @@
 #include "server.h"
-#include "handle.h"
 
 int main(int argc, char *argv[]) {
     int ASport = -1;
     char ASportStr[6]; //TODO check if this is the right size
     int GN = GROUP_NUMBER;
-    int Verbose = FALSE;
+    bool Verbose = false;
 
     int fd,errcode;
     ssize_t n;
@@ -21,7 +20,7 @@ int main(int argc, char *argv[]) {
             ASport = atoi(optarg);
             break;
         case 'v':
-            Verbose = TRUE;
+            Verbose = true;
             break;
         default:
             fprintf(stderr, "Usage: %s [-p ASport] [-v]\n", argv[0]);
@@ -65,7 +64,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Wait for requests
-    while(TRUE) {
+    while(true) {
         // Receive message
 	    addrlen = sizeof(addr);
 	    n = recvfrom(fd, buffer, BUFFER_SIZE, 0, (struct sockaddr*) &addr, &addrlen);
@@ -75,17 +74,17 @@ int main(int argc, char *argv[]) {
         }
     
         // Print received message    
-        buffer[n] = '\0'; // Ensure the buffer is null-terminated
         printf("received: %s\n", buffer);
 
-       // Process request 
-        errcode = handle_request(buffer);
+        // Process request 
+        ConnectionType connectionType = handle_request(buffer);
         if(errcode == -1) {
             perror("Error processing request");
             exit(EXIT_FAILURE);
         }
 
         // Echo back
+        printf("sending: %s\n", buffer);
 	    n = sendto(fd, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
         if(n == -1) {
             perror("Error echoing message");
