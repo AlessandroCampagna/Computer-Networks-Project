@@ -14,6 +14,7 @@ int createUser(std::string uid, std::string password);
 int removeUser(std::string uid);
 int isPassword(std::string uid, std::string password);
 int isLogin(std::string uid);
+int loginUser(std::string uid);
 int logoutUser(std::string uid);
 
 #endif

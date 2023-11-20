@@ -44,13 +44,16 @@ int isLogin(std::string uid) {
     return 0;
 }
 
+int loginUser(std::string uid) {
+    // Create login file
+    printf("Creating login file\n");
+    std::ofstream file(USER_PATH + uid + "/" + uid + "_login.txt");
+    return 0;
+}
+
 int logoutUser(std::string uid) {
-    // Check if user directory exists
-    if (fs::exists(USER_PATH + uid)) return -1;
-    
     // Remove login file
     fs::remove(USER_PATH + uid + "/" + uid + "_login.txt");
-
     return 0;
 }
 

@@ -70,6 +70,7 @@ ConnectionType login(Tokens* token) {
     //Check if the user exists in the database
     if (isUser(uid) == 0) {
         createUser(uid, password);
+        loginUser(uid);
         response.push_back("RLI");
         response.push_back("REG");
     // Not loged in
@@ -79,6 +80,7 @@ ConnectionType login(Tokens* token) {
             response.push_back("RLI");
             response.push_back("NOK");
         } else {
+            loginUser(uid);
             response.push_back("RLI");
             response.push_back("OK");
         }
@@ -124,4 +126,3 @@ ConnectionType myauctions(Tokens* token) {
     
     return ConnectionType::UDP;
 }
-
