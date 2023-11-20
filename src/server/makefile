@@ -7,6 +7,6 @@ all:
 clean:
 	rm -f server.o
 run:
-	$(CC) $(CFLAGS) -o server.o data.cpp handler.cpp server.cpp
+	$(CC) $(CFLAGS) -o $(OUTDIR)/server.o data.cpp handler.cpp server.cpp
 	clear
 	./server.o
