@@ -38,7 +38,7 @@ bool isPassword(std::string uid, std::string password) {
     return true;
 }
 
-int isLogin(std::string uid) {
+bool isLogin(std::string uid) {
     // Check if user directory exists
     if (fs::exists(USER_PATH + uid + "/" + uid + "_login.txt")) return true;
     return false;
