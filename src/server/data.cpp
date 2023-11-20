@@ -18,6 +18,11 @@ int createUser(std::string uid, std::string password) {
     file << password;
     file.close();
 
+    // Create hosted directory
+    fs::create_directories(USER_PATH + uid + "/HOSTED");
+    // Create bid directory
+    fs::create_directories(USER_PATH + uid + "/BID");
+
     return 0;
 }
 
@@ -58,3 +63,26 @@ int logoutUser(std::string uid) {
 }
 
 // Auction fucntions
+
+bool isAuction(std::string uid, std::string aid) {
+    // Check if auction directory exists
+    if (fs::exists(USER_PATH + uid + "/HOSTED/" + aid + ".txt")) return true;
+    return false;
+}
+
+bool areAuctions(std::string uid) {
+    // Check if inside auction directory exists any file
+    for (const auto & entry : fs::directory_iterator(USER_PATH + uid + "/HOSTED/")) return true;
+    return false;
+}
+
+std::vector <std::string> getAuctions(std::string uid) {
+    std::vector <std::string> auctions;
+    for (const auto & entry : fs::directory_iterator(USER_PATH + uid + "/HOSTED/")) {
+        std::string auction = entry.path();
+        auction = auction.substr(auction.find_last_of("/") + 1);
+        auction = auction.substr(0, auction.find_last_of("."));
+        auctions.push_back(auction);
+    }
+    return auctions;
+}

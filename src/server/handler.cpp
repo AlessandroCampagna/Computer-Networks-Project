@@ -71,14 +71,13 @@ ConnectionType login(Tokens* token) {
     std::string password = (*token)[2];
 
     //Check if the user exists in the database
-    if (isUser(uid) == false) {
+    if (isUser(uid) == false || isPassword(uid, "") == true) {
         createUser(uid, password);
         loginUser(uid);
         response.push_back("RLI");
         response.push_back("REG");
     // Not loged in
     } else {
-        //Check if the password is correct
         if (isPassword(uid, password) == false) {
             response.push_back("RLI");
             response.push_back("NOK");
@@ -145,6 +144,25 @@ ConnectionType unregister(Tokens* token) {
 }
 
 ConnectionType myauctions(Tokens* token) {
-    
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+
+    if (isLogin(uid) == false) {
+        response.push_back("RMA");
+        response.push_back("NLG");
+    } else if (areAuctions(uid) == false) {
+        response.push_back("RMA");
+        response.push_back("NOK");
+    } else {
+        response.push_back("RMA");
+        response.push_back("OK");
+        for (auto auction : getAuctions(uid)) {
+            response.push_back(auction);
+        }
+    }
+
+    *token = response;
     return ConnectionType::UDP;
 }

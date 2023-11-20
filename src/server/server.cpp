@@ -65,6 +65,9 @@ int main(int argc, char *argv[]) {
 
     // Wait for requests
     while(true) {
+        // Clear buffer
+        memset(buffer, 0, BUFFER_SIZE);
+
         // Receive message
 	    addrlen = sizeof(addr);
 	    n = recvfrom(fd, buffer, BUFFER_SIZE, 0, (struct sockaddr*) &addr, &addrlen);
