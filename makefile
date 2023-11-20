@@ -6,8 +6,7 @@ all: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $@
+	mv $@/*.o .
 
 clean:
-	@for dir in $(SUBDIRS); do \
-		$(MAKE) -C $$dir clean; \
-	done
+	rm -f *.o
