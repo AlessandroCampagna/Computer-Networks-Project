@@ -68,7 +68,7 @@ ConnectionType login(Tokens* token) {
     std::string password = (*token)[2];
 
     //Check if the user exists in the database
-    if (isUser(uid) == 0) {
+    if (isUser(uid) == false) {
         createUser(uid, password);
         loginUser(uid);
         response.push_back("RLI");
@@ -76,7 +76,7 @@ ConnectionType login(Tokens* token) {
     // Not loged in
     } else {
         //Check if the password is correct
-        if (isPassword(uid, password) == 0) {
+        if (isPassword(uid, password) == false) {
             response.push_back("RLI");
             response.push_back("NOK");
         } else {
@@ -100,10 +100,10 @@ ConnectionType logout(Tokens* token) {
     std::string password = (*token)[2];
     
     //Check if the user dose not exists in the database
-    if (isUser(uid) == 1) {
+    if (isUser(uid) == false) {
         response.push_back("LOU");
         response.push_back("UNR"); 
-    } else if (isLogin(uid) == 0) {
+    } else if (isLogin(uid) == false) {
         response.push_back("LOU");
         response.push_back("NOK"); 
     } else {
@@ -118,7 +118,26 @@ ConnectionType logout(Tokens* token) {
 }
 
 ConnectionType unregister(Tokens* token) {
-    
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
+
+    //Check if the user dose not exists in the database
+    if (isUser(uid) == false) {
+        response.push_back("UNR");
+        response.push_back("UNR"); 
+    } else if (isPassword(uid, password) == false) {
+        response.push_back("UNR");
+        response.push_back("NOK"); 
+    } else {
+        removeUser(uid);
+        response.push_back("UNR");
+        response.push_back("OK");
+    }
+
+    *token = response;
     return ConnectionType::UDP;
 }
 

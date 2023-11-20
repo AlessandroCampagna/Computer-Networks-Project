@@ -3,10 +3,10 @@
 namespace fs = std::filesystem;
 
 // User functions
-int isUser(std::string uid) {
+bool isUser(std::string uid) {
     // Check if user directory exists
-    if (fs::exists(USER_PATH + uid)) return 1;
-    return 0;
+    if (fs::exists(USER_PATH + uid)) return true;
+    return false;
 }
 
 int createUser(std::string uid, std::string password) {
@@ -29,19 +29,19 @@ int removeUser(std::string uid) {
     return 0;
 }
 
-int isPassword(std::string uid, std::string password) {
+bool isPassword(std::string uid, std::string password) {
     //Check if the password is correct
     std::ifstream file(USER_PATH + uid + "/" + password + "_pass.txt");
     std::string correct_password;
     std::getline(file, correct_password);
-    if (password != correct_password) return 0;
-    return 1;
+    if (password != correct_password) return false;
+    return true;
 }
 
 int isLogin(std::string uid) {
     // Check if user directory exists
-    if (fs::exists(USER_PATH + uid + "/" + uid + "_login.txt")) return 1;
-    return 0;
+    if (fs::exists(USER_PATH + uid + "/" + uid + "_login.txt")) return true;
+    return false;
 }
 
 int loginUser(std::string uid) {
