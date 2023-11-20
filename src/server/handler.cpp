@@ -41,6 +41,7 @@ void diparse_buffer(char* buffer, Tokens* tokens) {
         result += word + " ";
     }
     result.pop_back(); // remove the last space
+    result += "\n";
     std::strcpy(buffer, result.c_str());
 }
 
@@ -101,14 +102,14 @@ ConnectionType logout(Tokens* token) {
     
     //Check if the user dose not exists in the database
     if (isUser(uid) == false) {
-        response.push_back("LOU");
+        response.push_back("RLO");
         response.push_back("UNR"); 
     } else if (isLogin(uid) == false) {
-        response.push_back("LOU");
+        response.push_back("RLO");
         response.push_back("NOK"); 
     } else {
         logoutUser(uid);
-        response.push_back("LOU");
+        response.push_back("RLO");
         response.push_back("OK");
     }
 
@@ -126,14 +127,14 @@ ConnectionType unregister(Tokens* token) {
 
     //Check if the user dose not exists in the database
     if (isUser(uid) == false) {
-        response.push_back("UNR");
+        response.push_back("RUR");
         response.push_back("UNR"); 
     } else if (isPassword(uid, password) == false) {
-        response.push_back("UNR");
+        response.push_back("RUR");
         response.push_back("NOK"); 
     } else {
         removeUser(uid);
-        response.push_back("UNR");
+        response.push_back("RUR");
         response.push_back("OK");
     }
 
