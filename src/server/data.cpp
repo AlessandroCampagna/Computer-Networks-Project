@@ -31,11 +31,11 @@ int removeUser(std::string uid) {
 
 bool isPassword(std::string uid, std::string password) {
     //Check if the password is correct
-    std::ifstream file(USER_PATH + uid + "/" + password + "_pass.txt");
+    std::ifstream file(USER_PATH + uid + "/" + uid + "_pass.txt");
     std::string correct_password;
     std::getline(file, correct_password);
-    if (password != correct_password) return false;
-    return true;
+    if (password == correct_password) return true;
+    return false;
 }
 
 bool isLogin(std::string uid) {

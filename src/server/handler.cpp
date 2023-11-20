@@ -21,6 +21,8 @@ Tokens parse_buffer(char *buffer) {
 
     // Make the buffer a cpp string
     std::string str(buffer);
+
+    str.erase(str.size() - 1); // Remove the last character (newline)
     
     // Split the string into tokens
     std::string delimiter = " ";
