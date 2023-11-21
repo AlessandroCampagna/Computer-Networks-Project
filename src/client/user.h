@@ -17,6 +17,9 @@
 #include <cstring>
 #include <string>
 #include <sstream>
+#include <regex>
+#include <filesystem>
+#include <fstream>
 
 
 #define PORT 58017

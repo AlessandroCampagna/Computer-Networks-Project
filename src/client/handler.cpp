@@ -105,12 +105,34 @@ void diparse_buffer(char* buffer, Tokens* tokens) {
     std::strcpy(buffer, result.c_str());
 }
 
+bool validator(const std::string& uid, const std::string& password) {
+    // Check if uid is 6 digits and numeric
+    std::regex uidRegex("\\d{6}");
+    if (!std::regex_match(uid, uidRegex)) {
+        return false;
+    }
+    
+    // Check if password is 8 digits and alphanumeric
+    std::regex passwordRegex("[a-zA-Z0-9]{8}");
+    if (!std::regex_match(password, passwordRegex)) {
+        return false;
+    }
+    
+    return true;
+}
+
+// -------------------- UDP -------------------- //
+
 // Define the functions for each command
 ConnectionType login(Tokens* tokens) {
-    (*tokens)[0] = "LIN";
-    uid = (*tokens)[1];
-    password = (*tokens)[2];
-    return ConnectionType::UDP;
+    if ((tokens->size() != 3) || (!validator((*tokens)[1], (*tokens)[2]))) {
+        return ConnectionType::INVALID;
+    }else{
+        (*tokens)[0] = "LIN";
+        uid = (*tokens)[1];
+        password = (*tokens)[2];
+        return ConnectionType::UDP;
+    }
 }
 
 void login_response(Tokens* tokens) {
@@ -127,10 +149,14 @@ void login_response(Tokens* tokens) {
 }
 
 ConnectionType logout(Tokens* tokens) {
-    (*tokens)[0] = "LOU";
-    tokens->push_back(uid);
-    tokens->push_back(password);
-    return ConnectionType::UDP;
+    if (tokens->size() != 1) {
+        return ConnectionType::INVALID;
+    }else{
+        (*tokens)[0] = "LOU";
+        tokens->push_back(uid);
+        tokens->push_back(password);
+        return ConnectionType::UDP;
+    }
 }
 
 void logout_response(Tokens* tokens) {
@@ -147,15 +173,20 @@ void logout_response(Tokens* tokens) {
 }
 
 ConnectionType unregister(Tokens* tokens) {
+    if (tokens->size() != 1) {
+        return ConnectionType::INVALID;
+    }else{
     (*tokens)[0] = "UNR";
-    tokens->push_back(uid);
-    tokens->push_back(password);
-    return ConnectionType::UDP;
+        tokens->push_back(uid);
+        tokens->push_back(password);
+        return ConnectionType::UDP;
+    }
 }
 
 void unregister_response(Tokens* tokens) {
     
     if ((*tokens)[1] == "OK") {
+        logged = false;
         printf("successful unregister\n");
     } else if ((*tokens)[1] == "NOK") {
         printf("incorrect unregister attempt\n");
@@ -168,9 +199,13 @@ void unregister_response(Tokens* tokens) {
 
 
 ConnectionType myauctions(Tokens* tokens) {
-    (*tokens)[0] = "LMA";
-    tokens->push_back(uid);
-    return ConnectionType::UDP;
+    if (tokens->size() != 1) {
+        return ConnectionType::INVALID;
+    }else{
+        (*tokens)[0] = "LMA";
+        tokens->push_back(uid);
+        return ConnectionType::UDP;
+    }
 }
 
 void myauctions_response(Tokens* tokens) {
@@ -189,9 +224,13 @@ void myauctions_response(Tokens* tokens) {
 }
 
 ConnectionType mybids(Tokens* tokens){
-    (*tokens)[0] = "LMB";
-    tokens->push_back(uid);
-    return ConnectionType::UDP;
+    if (tokens->size() != 1) {
+        return ConnectionType::INVALID;
+    }else{
+        (*tokens)[0] = "LMB";
+        tokens->push_back(uid);
+        return ConnectionType::UDP;
+    }
 }
 
 void mybids_response(Tokens* tokens){
@@ -210,8 +249,12 @@ void mybids_response(Tokens* tokens){
 }
 
 ConnectionType list(Tokens* tokens){
-    (*tokens)[0] = "LST";
-    return ConnectionType::UDP;
+    if (tokens->size() != 1) {
+        return ConnectionType::INVALID;
+    }else{
+        (*tokens)[0] = "LST";
+        return ConnectionType::UDP;
+    }
 }
 
 void list_response(Tokens* tokens){
@@ -227,16 +270,36 @@ void list_response(Tokens* tokens){
 }
 
 ConnectionType show_record(Tokens* tokens){
-    (*tokens)[0] = "SRC";
-    return ConnectionType::UDP;
+    if (tokens->size() != 2) {
+        return ConnectionType::INVALID;
+    }else{
+        (*tokens)[0] = "SRC";
+        return ConnectionType::UDP;
+    }
 }
 
 void  show_record_response(Tokens* token){
 
 }
 
-ConnectionType exituser(Tokens* tokens) {
-    return ConnectionType::EXIT;
+// -------------------- TCP -------------------- //
+
+ConnectionType open(Tokens* tokens) {
+    (*tokens)[0] = "OPA";
+    tokens->insert(tokens->begin() + 1, uid);
+    tokens->insert(tokens->begin() + 2, password);
+    
+
+    
+
+    return ConnectionType::TCP;
 }
 
 
+
+
+// -------------------- EXIT -------------------- //
+
+ConnectionType exituser(Tokens* tokens) {
+    return ConnectionType::EXIT;
+}
