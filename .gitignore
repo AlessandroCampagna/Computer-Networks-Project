@@ -37,3 +37,6 @@
 # Database
 ASDIR/AUCTIONS/*
 ASDIR/USERS/*
+
+# nushell
+.config

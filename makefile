@@ -11,6 +11,7 @@ clean:
 	@for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
+	rm -f *.o
 
 test:
 	@for dir in $(SUBDIRS); do \
