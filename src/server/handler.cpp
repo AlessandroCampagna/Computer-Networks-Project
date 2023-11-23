@@ -163,8 +163,6 @@ ConnectionType myauctions(Tokens* token) {
         }
     }
 
-    // Random change
-
     *token = response;
     return ConnectionType::UDP;
 }
