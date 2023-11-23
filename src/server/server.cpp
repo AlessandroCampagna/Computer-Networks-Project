@@ -6,10 +6,10 @@ int main(int argc, char *argv[]) {
     int GN = GROUP_NUMBER;
     bool Verbose = false;
 
-    int fd,errcode;
+    int UDPsocket, TCPsocket, errcode;
     ssize_t n;
     socklen_t addrlen;
-    struct addrinfo hints,*res;
+    struct addrinfo UDPhints, TCPhints,*res;
     struct sockaddr_in addr;
     char buffer[BUFFER_SIZE];
 
@@ -34,30 +34,56 @@ int main(int argc, char *argv[]) {
 
     if (Verbose) printf("ASport = %s\n", ASportStr);
 
-    // Establish UDP connection with cliennts
+    // Create socketS
+    UDPsocket = socket(AF_INET, SOCK_DGRAM, 0); //UDP socket
+    if(UDPsocket == -1) {
+        perror("Error creating UDP socket");
+        exit(EXIT_FAILURE);
+    }
 
-    // Create socket
-    fd = socket(AF_INET, SOCK_DGRAM, 0); //UDP socket
-    if(fd == -1) {
-        perror("Error creating socket");
+    TCPsocket = socket(AF_INET, SOCK_STREAM, 0); //UDP socket
+    if(TCPsocket == -1) {
+        perror("Error creating TCP socket");
         exit(EXIT_FAILURE);
     }
 
     // Clear address structure
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET; // IPv4
-    hints.ai_socktype = SOCK_DGRAM; // UDP socket
-    hints.ai_flags = AI_PASSIVE;
+    memset(&UDPhints, 0, sizeof UDPhints);
+    memset(&TCPhints, 0, sizeof TCPhints);
 
-    // Get address info
-    errcode = getaddrinfo(NULL, ASportStr, &hints, &res);
+    // Define address structure for UDP
+    UDPhints.ai_family = AF_INET; // IPv4
+    UDPhints.ai_socktype = SOCK_DGRAM; // UDP socket
+    UDPhints.ai_flags = AI_PASSIVE;
+
+    // Define address structure for TCP
+    TCPhints.ai_family = AF_INET; // IPv4
+    TCPhints.ai_socktype = SOCK_STREAM; // TCP socket
+    TCPhints.ai_flags = AI_PASSIVE;
+
+    // Get UDP address info
+    errcode = getaddrinfo(NULL, ASportStr, &UDPhints, &res);
     if(errcode == -1) {
         perror("Error getting address info");
         exit(EXIT_FAILURE);
     }
 
-    // Bind socket
-    n = bind(fd, res->ai_addr, res->ai_addrlen);
+    // Bind UDP socket 
+    n = bind(UDPsocket, res->ai_addr, res->ai_addrlen);
+    if(n == -1) {
+        perror("Error binding socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Get TCP address info
+    errcode = getaddrinfo(NULL, ASportStr, &TCPhints, &res);
+    if(errcode == -1) {
+        perror("Error getting address info");
+        exit(EXIT_FAILURE);
+    }
+
+    // Bind TCP socket 
+    n = bind(TCPsocket, res->ai_addr, res->ai_addrlen);
     if(n == -1) {
         perror("Error binding socket");
         exit(EXIT_FAILURE);
@@ -70,7 +96,7 @@ int main(int argc, char *argv[]) {
 
         // Receive message
 	    addrlen = sizeof(addr);
-	    n = recvfrom(fd, buffer, BUFFER_SIZE, 0, (struct sockaddr*) &addr, &addrlen);
+	    n = recvfrom(UDPsocket, buffer, BUFFER_SIZE, 0, (struct sockaddr*) &addr, &addrlen);
         if(n == -1) {
             perror("Error receiving message");
             exit(EXIT_FAILURE);
@@ -88,7 +114,7 @@ int main(int argc, char *argv[]) {
 
         // Echo back
         printf("sending: %s\n", buffer);
-	    n = sendto(fd, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
+	    n = sendto(UDPsocket, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
         if(n == -1) {
             perror("Error echoing message");
             exit(EXIT_FAILURE);
@@ -96,7 +122,9 @@ int main(int argc, char *argv[]) {
     }
 
     freeaddrinfo(res);
-    close(fd);
+
+    close(UDPsocket);
+    close(TCPsocket);
 
     return 0;
 }
