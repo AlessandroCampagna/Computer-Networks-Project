@@ -284,20 +284,38 @@ void  show_record_response(Tokens* token){
 
 // -------------------- TCP -------------------- //
 
+#include <fstream>
+
 ConnectionType open(Tokens* tokens) {
+
+    // Check if the format of the token 3 is "asset_*"
+    if ((*tokens)[1].compare(0, 6, "asset_") != 0) return ConnectionType::INVALID;
+    std::string fname = (*tokens)[1].substr(6);
+    tokens->erase(tokens->begin() + 1); // Remove token on index 1
+
+    std::string filepath = folderPath + fname;
+    std::filesystem::path path(filepath);
+    if (!std::filesystem::exists(path)) return ConnectionType::INVALID;
+    std::uintmax_t fileSize = std::filesystem::file_size(path);
+
+    std::ifstream file(filepath);
+    if (!file) return ConnectionType::INVALID;
+    std::string fileData;
+    std::string line;
+    while (std::getline(file, line)) {
+        fileData += line + "\n";
+    }
+    file.close();
+
     (*tokens)[0] = "OPA";
     tokens->insert(tokens->begin() + 1, uid);
     tokens->insert(tokens->begin() + 2, password);
-    
-
-    
+    tokens->push_back(fname);
+    tokens->push_back(std::to_string(fileSize));
+    tokens->push_back(fileData);
 
     return ConnectionType::TCP;
 }
-
-
-
-
 // -------------------- EXIT -------------------- //
 
 ConnectionType exituser(Tokens* tokens) {

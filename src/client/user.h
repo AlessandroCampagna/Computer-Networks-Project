@@ -25,6 +25,8 @@
 #define PORT 58017
 #define BUFFER_SIZE 128
 
+std::string folderPath = "ASSETS/";
+
 extern std::string uid;
 extern std::string password;
 extern bool logged;
