@@ -30,6 +30,11 @@ enum ConnectionType {
     INVALID
 };
 
+struct Connection {
+    ConnectionType type;
+    int socket;
+};
+
 ConnectionType handle_request(char *buffer);
 
 #endif
