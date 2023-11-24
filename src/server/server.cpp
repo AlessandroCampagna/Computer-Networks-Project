@@ -89,7 +89,7 @@ int initConnections(Connection *UDPconnection, Connection *TCPconnection, char *
 
 int main(int argc, char *argv[]) {
     int ASport = -1;
-    char ASportStr[6]; //TODO check if this is the right size
+    char ASportStr[5];
     int GN = GROUP_NUMBER;
     bool Verbose = false;
 
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
         }
     
         // Print received message    
-        printf("received: %s\n", buffer);
+        printf("(UDP) Received: %s", buffer);
 
         // Process request 
         ConnectionType connectionType = handle_request(buffer);
@@ -141,12 +141,25 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
 
-        // Echo back
-        printf("sending: %s\n", buffer);
-	    n = sendto(UDPconnection.socket, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
-        if(n == -1) {
-            perror("Error sending message");
+        if (connectionType == ConnectionType::EXIT) {
+            break;
+        } else if (connectionType == ConnectionType::INVALID) {
+            perror("Error processing request");
             exit(EXIT_FAILURE);
+        } else if (connectionType == ConnectionType::UDP) {
+            printf("(UDP) Responding: %s\n", buffer);
+            n = sendto(UDPconnection.socket, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
+            if(n == -1) {
+                perror("Error sending message");
+                exit(EXIT_FAILURE);
+            }
+        } else if (connectionType == ConnectionType::TCP) {
+            printf("(TCP) Sending: %s\n", buffer);
+            n = send(TCPconnection.socket, buffer, n, 0);
+            if(n == -1) {
+                perror("Error sending message");
+                exit(EXIT_FAILURE);
+            }
         }
     }
 

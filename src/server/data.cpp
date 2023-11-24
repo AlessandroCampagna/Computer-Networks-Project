@@ -10,6 +10,7 @@ bool isUser(std::string uid) {
 }
 
 int createUser(std::string uid, std::string password) {
+    printf("(AS) Creating user %s\n", uid.c_str());
     // Create user directory
     fs::create_directories(USER_PATH + uid);
 
@@ -27,6 +28,7 @@ int createUser(std::string uid, std::string password) {
 }
 
 int removeUser(std::string uid) {
+    printf("(AS) Removing user %s\n", uid.c_str());
     // Remove user directory
     fs::remove_all(USER_PATH + uid + "/" + uid + "_pass.txt");
     fs::remove_all(USER_PATH + uid + "/" + uid + "_login.txt");
@@ -51,13 +53,14 @@ bool isLogin(std::string uid) {
 
 int loginUser(std::string uid) {
     // Create login file
-    printf("Creating login file\n");
+    printf("(AS) Creating login file\n");
     std::ofstream file(USER_PATH + uid + "/" + uid + "_login.txt");
     return 0;
 }
 
 int logoutUser(std::string uid) {
     // Remove login file
+    printf("(AS) Removing login file\n");
     fs::remove(USER_PATH + uid + "/" + uid + "_login.txt");
     return 0;
 }
