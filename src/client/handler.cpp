@@ -284,9 +284,11 @@ void  show_record_response(Tokens* token){
 
 // -------------------- TCP -------------------- //
 
-#include <fstream>
-
 ConnectionType open(Tokens* tokens) {
+
+    if (tokens->size() != 6 ) {
+        return ConnectionType::INVALID;
+    }
 
     // Check if the format of the token 3 is "asset_*"
     if ((*tokens)[1].compare(0, 6, "asset_") != 0) return ConnectionType::INVALID;
@@ -316,6 +318,38 @@ ConnectionType open(Tokens* tokens) {
 
     return ConnectionType::TCP;
 }
+
+void open_response(Tokens* tokens) {
+    if (tokens->size() != 3) {
+        // Invalid response format
+        return;
+    }
+
+    std::string status = (*tokens)[1];
+    std::string AID = (*tokens)[2];
+
+    if (status == "NOK") {
+        // Auction could not be started
+        // Handle the NOK status
+        printf("auction could not be started\n");
+    } else if (status == "NLG") {
+        // User was not logged in
+        // Handle the NLG status
+        printf("user was not logged in\n");
+    } else if (status == "OK") {
+        // Auction started successfully
+        // Handle the OK status
+        // Store the local copy of the asset file using the filename Fname
+        printf("AID: %s\n", AID.c_str());
+
+    } else {
+        // Unknown status
+        // Handle the unknown status
+        printf("unknown status\n");
+    }
+}
+
+
 // -------------------- EXIT -------------------- //
 
 ConnectionType exituser(Tokens* tokens) {
