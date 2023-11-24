@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
         printf("sending: %s\n", buffer);
 	    n = sendto(UDPconnection.socket, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
         if(n == -1) {
-            perror("Error echoing message");
+            perror("Error sending message");
             exit(EXIT_FAILURE);
         }
     }
