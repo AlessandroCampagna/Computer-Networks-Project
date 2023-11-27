@@ -19,9 +19,7 @@ int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose) {
     return 0;
 }
 
-void* handle_UDP(void* arg) {
-
-    char* ASportStr = (char*) arg;
+void* handle_UDP(char* ASportStr) {
 
     Connection UDPconnection;
     struct addrinfo hints, *res;
@@ -104,9 +102,7 @@ void* handle_UDP(void* arg) {
     return NULL;
 }
 
-void* handle_TCP(void* arg) {
-
-    char* ASportStr = (char*) arg;
+void* handle_TCP(char* ASportStr) {
 
     Connection TCPconnection;
 
