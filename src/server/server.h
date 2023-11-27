@@ -21,6 +21,7 @@
 #define PORT 58000
 #define GROUP_NUMBER 17
 #define BACKLOG 5
+#define TIME_OUT 5
 
 enum ConnectionType {
     UDP,

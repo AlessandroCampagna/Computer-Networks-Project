@@ -41,12 +41,6 @@ void* handle_UDP(void* arg) {
         exit(EXIT_FAILURE);
     }
 
-    // Set timeout for receive operations
-    struct timeval timeout;
-    timeout.tv_sec = 5;  // timeout after 5 seconds
-    timeout.tv_usec = 0;  // not init'ing this can cause strange errors
-    setsockopt(UDPconnection.socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
-
     // Define address structure for UDP
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // IPv4
@@ -158,19 +152,25 @@ void* handle_TCP(void* arg) {
         // Clear buffer
         memset(buffer, 0, BUFFER_SIZE);
 
-    // Listen for connections
-    if (listen(TCPconnection.socket, BACKLOG) == -1) {
-        perror("(TCP)  Error listening on socket");
-        exit(EXIT_FAILURE);
-    }
+        // Listen for connections
+        if (listen(TCPconnection.socket, BACKLOG) == -1) {
+            perror("(TCP)  Error listening on socket");
+            exit(EXIT_FAILURE);
+        }
 
-    // Accept a connection
-    addrlen = sizeof(addr);
-    int new_socket = accept(TCPconnection.socket, (struct sockaddr*)&addr, &addrlen);
-    if (new_socket == -1) {
-        perror("(TCP)  Error accepting connection");
-        exit(EXIT_FAILURE);
-    }
+        // Accept a connection
+        addrlen = sizeof(addr);
+        int new_socket = accept(TCPconnection.socket, (struct sockaddr*)&addr, &addrlen);
+        if (new_socket == -1) {
+            perror("(TCP)  Error accepting connection");
+            exit(EXIT_FAILURE);
+        }
+
+        // Set timeout for receive operations
+        struct timeval timeout;
+        timeout.tv_sec = TIME_OUT;  // timeout after 5 seconds
+        timeout.tv_usec = 0;  // not init'ing this can cause strange errors
+        setsockopt(TCPconnection.socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 
         // Receive message
         addrlen = sizeof(addr);
