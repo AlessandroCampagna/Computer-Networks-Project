@@ -19,19 +19,25 @@ int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose) {
     return 0;
 }
 
-int initConnections(Connection *UDPconnection, Connection *TCPconnection, char *ASportStr)  {
-    
+void* handle_UDP(void* arg) {
+
+    char* ASportStr = (char*) arg;
+
+    Connection UDPconnection;
     struct addrinfo hints, *res;
+    struct sockaddr_in addr;
+    socklen_t addrlen;
     int n, errcode;
 
+    char buffer[BUFFER_SIZE];
+
     // Initialize UDP connection
-    UDPconnection->type = ConnectionType::UDP;
-    TCPconnection->type = ConnectionType::TCP;
+    UDPconnection.type = ConnectionType::UDP;
 
      // Create UDP socket
-    UDPconnection->socket = socket(AF_INET, SOCK_DGRAM, 0); //UDP socket
-    if(UDPconnection->socket == -1) {
-        perror("Error creating UDP socket");
+    UDPconnection.socket = socket(AF_INET, SOCK_DGRAM, 0); //UDP socket
+    if(UDPconnection.socket == -1) {
+        perror("(UDP) Error creating UDP socket");
         exit(EXIT_FAILURE);
     }
 
@@ -44,25 +50,84 @@ int initConnections(Connection *UDPconnection, Connection *TCPconnection, char *
     // Get UDP address info
     errcode = getaddrinfo(NULL, ASportStr, &hints, &res);
     if(errcode == -1) {
-        perror("Error getting UDP address info");
+        perror("(UDP) Error getting UDP address info");
         exit(EXIT_FAILURE);
     }
 
     // Bind UDP socket
-    n = bind(UDPconnection->socket, res->ai_addr, res->ai_addrlen);
+    n = bind(UDPconnection.socket, res->ai_addr, res->ai_addrlen);
     if(n == -1) {
-        perror("Error binding UDP socket");
+        perror("(UDP) Error binding UDP socket");
         exit(EXIT_FAILURE);
     }
+
+    // Place the UDP related code here
+    while(true) {
+        // Clear buffer
+        memset(buffer, 0, BUFFER_SIZE);
+
+        // Receive message
+        addrlen = sizeof(addr);
+        n = recvfrom(UDPconnection.socket, buffer, BUFFER_SIZE, 0, (struct sockaddr*) &addr, &addrlen);
+        if(n == -1) {
+            perror("(UDP) Error receiving message");
+            exit(EXIT_FAILURE);
+        }
+
+        // Print received message    
+        printf("(UDP) Received: %s", buffer);
+
+        // Process request 
+        ConnectionType connectionType = handle_request(buffer);
+        if(errcode == -1) {
+            perror("(UDP) Error processing request");
+            exit(EXIT_FAILURE);
+        }
+
+        if (connectionType == ConnectionType::EXIT) {
+            break;
+        } else if (connectionType == ConnectionType::INVALID) {
+            perror("(UDP) Error processing request");
+            exit(EXIT_FAILURE);
+        } else if (connectionType == ConnectionType::UDP) {
+            printf("(UDP) Responding: %s\n", buffer);
+            n = sendto(UDPconnection.socket, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
+            if(n == -1) {
+                perror("(UDP) Error sending message");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+    close(UDPconnection.socket);
+    freeaddrinfo(res);
+    return NULL;
+}
+
+void* handle_TCP(void* arg) {
+
+    char* ASportStr = (char*) arg;
+
+    Connection TCPconnection;
+
+    struct addrinfo hints, *res;
+    struct sockaddr_in addr;
+    socklen_t addrlen;
+    int n, errcode;
+
+    char buffer[BUFFER_SIZE];
+
+    // Initialize TCP connection
+    TCPconnection.type = ConnectionType::TCP;
 
      // Create TCP socket
-    TCPconnection->socket = socket(AF_INET, SOCK_STREAM, 0); //UDP socket
-    if(TCPconnection->socket == -1) {
-        perror("Error creating TCP socket");
+    TCPconnection.socket = socket(AF_INET, SOCK_STREAM, 0); //TCP socket
+    if(TCPconnection.socket == -1) {
+        perror("(TCP) Error creating TCP socket");
         exit(EXIT_FAILURE);
     }
 
-    // Define address structure for UDP
+    // Define address structure for TCP
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP socket
@@ -71,41 +136,87 @@ int initConnections(Connection *UDPconnection, Connection *TCPconnection, char *
     // Get TCP address info
     errcode = getaddrinfo(NULL, ASportStr, &hints, &res);
     if(errcode == -1) {
-        perror("Error getting TCP address info");
+        perror("(TCP) Error getting TCP address info");
         exit(EXIT_FAILURE);
     }
 
     // Bind TCP socket
-    n = bind(TCPconnection->socket, res->ai_addr, res->ai_addrlen);
+    n = bind(TCPconnection.socket, res->ai_addr, res->ai_addrlen);
     if(n == -1) {
-        perror("Error binding UDP socket");
+        perror("(TCP) Error binding TCP socket");
         exit(EXIT_FAILURE);
     }
 
-    freeaddrinfo(res);
+    // Place the TCP related code here
+    while(true) {
+        // Clear buffer
+        memset(buffer, 0, BUFFER_SIZE);
 
-    return 0;
+    // Listen for connections
+    if (listen(TCPconnection.socket, BACKLOG) == -1) {
+        perror("(TCP)  Error listening on socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Accept a connection
+    addrlen = sizeof(addr);
+    int new_socket = accept(TCPconnection.socket, (struct sockaddr*)&addr, &addrlen);
+    if (new_socket == -1) {
+        perror("(TCP)  Error accepting connection");
+        exit(EXIT_FAILURE);
+    }
+
+        // Receive message
+        addrlen = sizeof(addr);
+        n = recv(TCPconnection.socket, buffer, BUFFER_SIZE, 0);
+        if(n == -1) {
+            perror("(TCP)  Error receiving message");
+            exit(EXIT_FAILURE);
+        }
+
+        // Print received message    
+        printf("(TCP) Received: %s", buffer);
+
+        // Process request 
+        ConnectionType connectionType = handle_request(buffer);
+        if(errcode == -1) {
+            perror("(TCP)  Error processing request");
+            exit(EXIT_FAILURE);
+        }
+
+        if (connectionType == ConnectionType::EXIT) {
+            break;
+        } else if (connectionType == ConnectionType::INVALID) {
+            perror("(TCP)  Error processing request");
+            exit(EXIT_FAILURE);
+        } else if (connectionType == ConnectionType::TCP) {
+            printf("(TCP) Sending: %s\n", buffer);
+            n = send(TCPconnection.socket, buffer, n, 0);
+            if(n == -1) {
+                perror("(TCP) Error sending message");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+    
+    close(TCPconnection.socket);
+    freeaddrinfo(res);
+    return NULL;
 }
 
 int main(int argc, char *argv[]) {
     int ASport = -1;
     char ASportStr[5];
     int GN = GROUP_NUMBER;
+
     bool Verbose = false;
 
     int errcode;
-    ssize_t n;
-
-    Connection UDPconnection, TCPconnection;
-    socklen_t addrlen;
-    struct sockaddr_in addr;
     
-    char buffer[BUFFER_SIZE];
-
     // Parse arguments
     errcode = parseArgs(argc, argv, &ASport, &GN, &Verbose);
     if (errcode == -1) {
-        perror("Error parsing arguments");
+        perror("(SERVER) Error parsing arguments");
         exit(EXIT_FAILURE);
     }
 
@@ -113,58 +224,36 @@ int main(int argc, char *argv[]) {
     if (ASport == -1) ASport = PORT + GN; // default port
     sprintf(ASportStr, "%d", ASport); // convert port to string
 
-    if (Verbose) printf("ASport = %s\n", ASportStr);
+    if (Verbose) printf("(SERVER) ASport = %s\n", ASportStr);
 
-    // Initialize connections
-    initConnections(&UDPconnection, &TCPconnection, ASportStr);
-
-    // Wait for requests
-    while(true) {
-        // Clear buffer
-        memset(buffer, 0, BUFFER_SIZE);
-
-        // Receive message
-	    addrlen = sizeof(addr);
-	    n = recvfrom(UDPconnection.socket, buffer, BUFFER_SIZE, 0, (struct sockaddr*) &addr, &addrlen);
-        if(n == -1) {
-            perror("Error receiving message");
-            exit(EXIT_FAILURE);
+    // Create processes
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("(SERVER) Failed to fork UDP");
+        return EXIT_FAILURE;
+    }
+    if (pid == 0) {
+        // Child process
+        handle_UDP((void*) ASportStr);
+        exit(EXIT_SUCCESS);
+    } else {
+        //Parent process
+        pid_t pid2 = fork();
+        if (pid2 < 0) {
+            perror("(SERVER) Failed to fork TCP");
+            return EXIT_FAILURE;
         }
-    
-        // Print received message    
-        printf("(UDP) Received: %s", buffer);
-
-        // Process request 
-        ConnectionType connectionType = handle_request(buffer);
-        if(errcode == -1) {
-            perror("Error processing request");
-            exit(EXIT_FAILURE);
-        }
-
-        if (connectionType == ConnectionType::EXIT) {
-            break;
-        } else if (connectionType == ConnectionType::INVALID) {
-            perror("Error processing request");
-            exit(EXIT_FAILURE);
-        } else if (connectionType == ConnectionType::UDP) {
-            printf("(UDP) Responding: %s\n", buffer);
-            n = sendto(UDPconnection.socket, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
-            if(n == -1) {
-                perror("Error sending message");
-                exit(EXIT_FAILURE);
-            }
-        } else if (connectionType == ConnectionType::TCP) {
-            printf("(TCP) Sending: %s\n", buffer);
-            n = send(TCPconnection.socket, buffer, n, 0);
-            if(n == -1) {
-                perror("Error sending message");
-                exit(EXIT_FAILURE);
-            }
+        if (pid2 == 0) {
+            // Child process
+            handle_TCP((void*) ASportStr);
+            exit(EXIT_SUCCESS);
         }
     }
 
-    close(UDPconnection.socket);
-    close(TCPconnection.socket);
+    // Wait for child process to finish
+    int status;
+    waitpid(pid, &status, 0);
+    waitpid(pid2, &status, 0);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
