@@ -34,18 +34,18 @@ void* handle_UDP(void* arg) {
     // Initialize UDP connection
     UDPconnection.type = ConnectionType::UDP;
 
-    // Set timeout for receive operations
-    struct timeval timeout;
-    timeout.tv_sec = 5;  // timeout after 5 seconds
-    timeout.tv_usec = 0;  // not init'ing this can cause strange errors
-    setsockopt(UDPconnection.socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
-
      // Create UDP socket
     UDPconnection.socket = socket(AF_INET, SOCK_DGRAM, 0); //UDP socket
     if(UDPconnection.socket == -1) {
         perror("(UDP) Error creating UDP socket");
         exit(EXIT_FAILURE);
     }
+
+    // Set timeout for receive operations
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // timeout after 5 seconds
+    timeout.tv_usec = 0;  // not init'ing this can cause strange errors
+    setsockopt(UDPconnection.socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 
     // Define address structure for UDP
     memset(&hints, 0, sizeof hints);
@@ -232,35 +232,33 @@ int main(int argc, char *argv[]) {
 
     if (Verbose) printf("(SERVER) ASport = %s\n", ASportStr);
 
-    // Create processes
-    pid_t pid1, pid2;
-    pid1 = fork();
-    if (pid1 < 0) {
-        perror("(SERVER) Failed to fork UDP");
-        return EXIT_FAILURE;
-    }
-    if (pid1 == 0) {
-        // Child process
-        handle_UDP((void*) ASportStr);
+    // Create child processes for UDP and TCP
+    pid_t udp, tcp;
+
+    udp = fork();
+    if (udp == -1) {
+        perror("(SERVER) Error creating UDP child process");
+        exit(EXIT_FAILURE);
+    } else if (udp == 0) {
+        // Child process for UDP
+        handle_UDP(ASportStr);
         exit(EXIT_SUCCESS);
-    } else {
-        //Parent process
-        pid_t pid2 = fork();
-        if (pid2 < 0) {
-            perror("(SERVER) Failed to fork TCP");
-            return EXIT_FAILURE;
-        }
-        if (pid2 == 0) {
-            // Child process
-            handle_TCP((void*) ASportStr);
-            exit(EXIT_SUCCESS);
-        }
+    }
+
+    tcp = fork();
+    if (tcp == -1) {
+        perror("(SERVER) Error creating TCP child process");
+        exit(EXIT_FAILURE);
+    } else if (tcp == 0) {
+        // Child process for TCP
+        handle_TCP(ASportStr);
+        exit(EXIT_SUCCESS);
     }
 
     // Wait for child process to finish
     int status;
-    waitpid(pid1, &status, 0);
-    waitpid(pid2, &status, 0);
+    waitpid(udp, &status, 0);
+    waitpid(tcp, &status, 0);
 
     return EXIT_SUCCESS;
 }

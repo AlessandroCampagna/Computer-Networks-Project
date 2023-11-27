@@ -75,7 +75,10 @@ bool isAuction(std::string uid, std::string aid) {
 
 bool areAuctions(std::string uid) {
     // Check if inside auction directory exists any file
-    for (const auto & entry : fs::directory_iterator(USER_PATH + uid + "/HOSTED/")) return true;
+    for (const auto & entry : fs::directory_iterator(USER_PATH + uid + "/HOSTED/")) {
+        (void)entry;  // Cast to void to avoid unused variable warning
+        return true;
+    }
     return false;
 }
 
