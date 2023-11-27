@@ -34,6 +34,12 @@ void* handle_UDP(void* arg) {
     // Initialize UDP connection
     UDPconnection.type = ConnectionType::UDP;
 
+    // Set timeout for receive operations
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // timeout after 5 seconds
+    timeout.tv_usec = 0;  // not init'ing this can cause strange errors
+    setsockopt(UDPconnection.socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+
      // Create UDP socket
     UDPconnection.socket = socket(AF_INET, SOCK_DGRAM, 0); //UDP socket
     if(UDPconnection.socket == -1) {
@@ -227,12 +233,13 @@ int main(int argc, char *argv[]) {
     if (Verbose) printf("(SERVER) ASport = %s\n", ASportStr);
 
     // Create processes
-    pid_t pid = fork();
-    if (pid < 0) {
+    pid_t pid1, pid2;
+    pid1 = fork();
+    if (pid1 < 0) {
         perror("(SERVER) Failed to fork UDP");
         return EXIT_FAILURE;
     }
-    if (pid == 0) {
+    if (pid1 == 0) {
         // Child process
         handle_UDP((void*) ASportStr);
         exit(EXIT_SUCCESS);
@@ -252,7 +259,7 @@ int main(int argc, char *argv[]) {
 
     // Wait for child process to finish
     int status;
-    waitpid(pid, &status, 0);
+    waitpid(pid1, &status, 0);
     waitpid(pid2, &status, 0);
 
     return EXIT_SUCCESS;
