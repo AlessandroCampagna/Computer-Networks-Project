@@ -23,14 +23,16 @@
 #define BACKLOG 5
 #define TIME_OUT 5
 
-enum ConnectionType {
+enum ConnectionType
+{
     UDP,
     TCP,
     EXIT,
     INVALID
 };
 
-struct Connection {
+struct Connection
+{
     ConnectionType type;
     int socket;
 };

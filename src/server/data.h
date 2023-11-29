@@ -21,6 +21,6 @@ int logoutUser(std::string uid);
 // Auction functions
 bool isAuction(std::string uid, std::string aid);
 bool areAuctions(std::string uid);
-std::vector <std::string> getAuctions(std::string uid);
+std::vector<std::string> getAuctions(std::string uid);
 
 #endif
