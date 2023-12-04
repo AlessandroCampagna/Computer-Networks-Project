@@ -163,7 +163,6 @@ void *handle_TCP(char *ASportStr)
         exit(EXIT_FAILURE);
     }
 
-    // Place the TCP related code here
     while (true)
     {
         // Clear buffer
@@ -185,53 +184,58 @@ void *handle_TCP(char *ASportStr)
             exit(EXIT_FAILURE);
         }
 
-        // Set timeout for receive operations
-        struct timeval timeout;
-        timeout.tv_sec = TIME_OUT; // timeout after 5 seconds
-        timeout.tv_usec = 0;       // not init'ing this can cause strange errors
-        setsockopt(TCPconnection.socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
-
-        // Receive message
-        addrlen = sizeof(addr);
-        n = recv(TCPconnection.socket, buffer, BUFFER_SIZE, 0);
-        if (n == -1)
+        // Fork a new process for each connection
+        printf("(TCP)  Forking a new process for incoming request\n");
+        pid_t pid = fork();
+        if (pid == -1)
         {
-            perror("(TCP)  Error receiving message");
+            perror("(TCP) Error creating a new process");
             exit(EXIT_FAILURE);
         }
+        else if (pid == 0) // Child process
+        {
+            // Set timeout for receive operations
+            struct timeval timeout;
+            timeout.tv_sec = TIME_OUT; // timeout after 5 seconds
+            timeout.tv_usec = 0;       // not init'ing this can cause strange errors
+            setsockopt(TCPconnection.socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 
-        // Print received message
-        printf("(TCP) Received: %s", buffer);
-
-        // Process request
-        ConnectionType connectionType = handle_request(buffer);
-        if (errcode == -1)
-        {
-            perror("(TCP)  Error processing request");
-            exit(EXIT_FAILURE);
-        }
-
-        if (connectionType == ConnectionType::EXIT)
-        {
-            break;
-        }
-        else if (connectionType == ConnectionType::INVALID)
-        {
-            perror("(TCP)  Error processing request");
-            exit(EXIT_FAILURE);
-        }
-        else if (connectionType == ConnectionType::TCP)
-        {
-            printf("(TCP) Sending: %s\n", buffer);
-            n = send(TCPconnection.socket, buffer, n, 0);
+            // Receive message
+            addrlen = sizeof(addr);
+            n = recv(TCPconnection.socket, buffer, BUFFER_SIZE, 0);
             if (n == -1)
             {
-                perror("(TCP) Error sending message");
+                perror("(TCP)  Error receiving message");
                 exit(EXIT_FAILURE);
             }
-        }
-    }
 
+            // Print received message
+            printf("(TCP) Received: %s", buffer);
+
+            // Process request
+            ConnectionType connectionType = handle_request(buffer);
+            if (connectionType == ConnectionType::INVALID)
+            {
+                perror("(TCP)  Error processing request");
+                exit(EXIT_FAILURE);
+            }
+
+            if (connectionType == ConnectionType::TCP)
+            {
+                printf("(TCP) Sending: %s\n", buffer);
+                n = send(TCPconnection.socket, buffer, n, 0);
+                if (n == -1)
+                {
+                    perror("(TCP) Error sending message");
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            close(new_socket);
+            exit(EXIT_SUCCESS);
+        }
+
+    }
     close(TCPconnection.socket);
     freeaddrinfo(res);
     return NULL;
