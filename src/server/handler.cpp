@@ -1,14 +1,14 @@
-#include "server.h"
-#include "data.h"
+#include "handler.hpp"
+#include "data.hpp"
 
 using Tokens = std::vector<std::string>;
-using CommandFunction = std::function<ConnectionType(Tokens *)>;
+using CommandFunction = std::function<Command(Tokens *)>;
 
-ConnectionType login(Tokens *);
-ConnectionType logout(Tokens *);
-ConnectionType unregister(Tokens *);
-ConnectionType myauctions(Tokens *);
-ConnectionType exituser(Tokens *);
+Command login(Tokens *);
+Command logout(Tokens *);
+Command unregister(Tokens *);
+Command myauctions(Tokens *);
+Command exituser(Tokens *);
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
     {"LIN", login},
@@ -50,7 +50,7 @@ void diparse_buffer(char *buffer, Tokens *tokens)
     std::strcpy(buffer, result.c_str());
 }
 
-ConnectionType handle_request(char *buffer)
+Command handle_request(char *buffer)
 {
 
     Tokens tokens = parse_buffer(buffer);
@@ -59,16 +59,16 @@ ConnectionType handle_request(char *buffer)
     // If the command is found, execute the associated function and return its value
     if (it != command_map.end())
     {
-        ConnectionType result = it->second(&tokens);
+        Command result = it->second(&tokens);
         diparse_buffer(buffer, &tokens);
         return result;
     }
 
     // If the command is not found, return an error value
-    return ConnectionType::INVALID;
+    return Command::COMMAND_NOT_FOUND;
 }
 
-ConnectionType login(Tokens *token)
+Command login(Tokens *token)
 {
     // Create new token for response
     Tokens response;
@@ -103,10 +103,10 @@ ConnectionType login(Tokens *token)
     // Replace token with response
     *token = response;
 
-    return ConnectionType::UDP;
+    return Command::COMAND_COMPLETED;
 }
 
-ConnectionType logout(Tokens *token)
+Command logout(Tokens *token)
 {
     // Create new token for response
     Tokens response;
@@ -134,10 +134,10 @@ ConnectionType logout(Tokens *token)
 
     *token = response;
 
-    return ConnectionType::UDP;
+    return Command::COMAND_COMPLETED;
 }
 
-ConnectionType unregister(Tokens *token)
+Command unregister(Tokens *token)
 {
     // Create new token for response
     Tokens response;
@@ -164,10 +164,10 @@ ConnectionType unregister(Tokens *token)
     }
 
     *token = response;
-    return ConnectionType::UDP;
+    return Command::COMAND_COMPLETED;
 }
 
-ConnectionType myauctions(Tokens *token)
+Command myauctions(Tokens *token)
 {
     // Create new token for response
     Tokens response;
@@ -195,5 +195,5 @@ ConnectionType myauctions(Tokens *token)
     }
 
     *token = response;
-    return ConnectionType::UDP;
+    return Command::COMAND_COMPLETED;
 }

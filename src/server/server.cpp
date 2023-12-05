@@ -1,4 +1,7 @@
-#include "server.h"
+#include "server.hpp"
+
+//TODO: Handle SIG_PIPE and zombie processes 
+//      Handle CTRL+C (SIGINT) and CTRL+Z (SIGTSTP) witg grace
 
 int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose)
 {
@@ -31,10 +34,7 @@ void *handle_UDP(char *ASportStr)
     socklen_t addrlen;
     int n, errcode;
 
-    char buffer[BUFFER_SIZE];
-
-    // Initialize UDP connection
-    UDPconnection.type = ConnectionType::UDP;
+    char buffer[UDP_BUFFER_SIZE];
 
     // Create UDP socket
     UDPconnection.socket = socket(AF_INET, SOCK_DGRAM, 0); // UDP socket
@@ -70,11 +70,11 @@ void *handle_UDP(char *ASportStr)
     while (true)
     {
         // Clear buffer
-        memset(buffer, 0, BUFFER_SIZE);
+        memset(buffer, 0, UDP_BUFFER_SIZE);
 
         // Receive message
         addrlen = sizeof(addr);
-        n = recvfrom(UDPconnection.socket, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
+        n = recvfrom(UDPconnection.socket, buffer, UDP_BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
         if (n == -1)
         {
             perror("(UDP) Error receiving message");
@@ -85,32 +85,22 @@ void *handle_UDP(char *ASportStr)
         printf("(UDP) Received: %s", buffer);
 
         // Process request
-        ConnectionType connectionType = handle_request(buffer);
-        if (errcode == -1)
+        Command status = handle_request(buffer);
+
+        if (status == Command::COMMAND_NOT_FOUND)
         {
-            perror("(UDP) Error processing request");
+            perror("(UDP) Command not found");
+            exit(EXIT_FAILURE);
+        }
+        
+        printf("(UDP) Responding: %s\n", buffer);
+        n = sendto(UDPconnection.socket, buffer, n, 0, (struct sockaddr *)&addr, addrlen);
+        if (n == -1)
+        {
+            perror("(UDP) Error sending message");
             exit(EXIT_FAILURE);
         }
 
-        if (connectionType == ConnectionType::EXIT)
-        {
-            break;
-        }
-        else if (connectionType == ConnectionType::INVALID)
-        {
-            perror("(UDP) Error processing request");
-            exit(EXIT_FAILURE);
-        }
-        else if (connectionType == ConnectionType::UDP)
-        {
-            printf("(UDP) Responding: %s\n", buffer);
-            n = sendto(UDPconnection.socket, buffer, n, 0, (struct sockaddr *)&addr, addrlen);
-            if (n == -1)
-            {
-                perror("(UDP) Error sending message");
-                exit(EXIT_FAILURE);
-            }
-        }
     }
 
     close(UDPconnection.socket);
@@ -128,10 +118,7 @@ void *handle_TCP(char *ASportStr)
     socklen_t addrlen;
     int n, errcode;
 
-    char buffer[BUFFER_SIZE];
-
-    // Initialize TCP connection
-    TCPconnection.type = ConnectionType::TCP;
+    char buffer[TCP_BUFFER_SIZE];
 
     // Create TCP socket
     TCPconnection.socket = socket(AF_INET, SOCK_STREAM, 0); // TCP socket
@@ -166,7 +153,7 @@ void *handle_TCP(char *ASportStr)
     while (true)
     {
         // Clear buffer
-        memset(buffer, 0, BUFFER_SIZE);
+        memset(buffer, 0, TCP_BUFFER_SIZE);
 
         // Listen for connections
         if (listen(TCPconnection.socket, BACKLOG) == -1)
@@ -202,7 +189,7 @@ void *handle_TCP(char *ASportStr)
 
             // Receive message
             addrlen = sizeof(addr);
-            n = recv(TCPconnection.socket, buffer, BUFFER_SIZE, 0);
+            n = recv(TCPconnection.socket, buffer, TCP_BUFFER_SIZE, 0);
             if (n == -1)
             {
                 perror("(TCP)  Error receiving message");
@@ -213,24 +200,21 @@ void *handle_TCP(char *ASportStr)
             printf("(TCP) Received: %s", buffer);
 
             // Process request
-            ConnectionType connectionType = handle_request(buffer);
-            if (connectionType == ConnectionType::INVALID)
+            Command status = handle_request(buffer);
+            if (status == Command::COMMAND_NOT_FOUND)
             {
-                perror("(TCP)  Error processing request");
+                perror("(TCP)  Command not found");
                 exit(EXIT_FAILURE);
             }
 
-            if (connectionType == ConnectionType::TCP)
+            printf("(TCP) Sending: %s\n", buffer);
+            n = send(TCPconnection.socket, buffer, n, 0);
+            if (n == -1)
             {
-                printf("(TCP) Sending: %s\n", buffer);
-                n = send(TCPconnection.socket, buffer, n, 0);
-                if (n == -1)
-                {
-                    perror("(TCP) Error sending message");
-                    exit(EXIT_FAILURE);
-                }
+                perror("(TCP) Error sending message");
+                exit(EXIT_FAILURE);
             }
-
+            
             close(new_socket);
             exit(EXIT_SUCCESS);
         }
