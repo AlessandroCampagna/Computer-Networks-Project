@@ -207,3 +207,19 @@ Command myauctions(Tokens *token)
     *token = response;
     return Command::COMAND_COMPLETED;
 }
+
+Command openAuction(Tokens *token){
+    return Command::COMAND_COMPLETED;
+}
+
+Command closeAuction(Tokens *token){
+    return Command::COMAND_COMPLETED;
+}
+
+Command sendAsset(Tokens *token){
+    return Command::COMAND_COMPLETED;
+}
+
+Command placeBid(Tokens *token){
+    return Command::COMAND_COMPLETED;
+}
