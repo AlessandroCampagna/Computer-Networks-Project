@@ -7,12 +7,16 @@
 #include <functional>
 #include <unordered_map>
 
+#include "data.hpp"
+
 enum Command
 {
     COMMAND_NOT_FOUND,
-    COMAND_COMPLETED
+    COMAND_COMPLETED,
+    COMMAND_RECIEVE_IMAGE,
+    COMMAND_SEND_IMAGE,
 };
 
-Command handle_request(char *buffer);
+Command handleRequest(char *buffer);
 
 #endif

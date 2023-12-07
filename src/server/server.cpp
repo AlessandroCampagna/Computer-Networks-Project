@@ -1,7 +1,7 @@
 #include "server.hpp"
 
 //TODO: Handle SIG_PIPE and zombie processes 
-//      Handle CTRL+C (SIGINT) and CTRL+Z (SIGTSTP) witg grace
+//      Handle CTRL+C (SIGINT) and CTRL+Z (SIGTSTP) exit with grace
 
 int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose)
 {
@@ -85,7 +85,7 @@ void *handle_UDP(char *ASportStr)
         printf("(UDP) Received: %s", buffer);
 
         // Process request
-        Command status = handle_request(buffer);
+        Command status = handleRequest(buffer);
 
         if (status == Command::COMMAND_NOT_FOUND)
         {
@@ -200,11 +200,15 @@ void *handle_TCP(char *ASportStr)
             printf("(TCP) Received: %s", buffer);
 
             // Process request
-            Command status = handle_request(buffer);
+            Command status = handleRequest(buffer);
             if (status == Command::COMMAND_NOT_FOUND)
             {
-                perror("(TCP)  Command not found");
+                perror("(TCP) Command not found");
                 exit(EXIT_FAILURE);
+            } else if (status == Command::COMMAND_SEND_IMAGE)
+            {
+                printf("(TCP) Sending Image\n");
+                //TODO: Send image
             }
 
             printf("(TCP) Sending: %s\n", buffer);

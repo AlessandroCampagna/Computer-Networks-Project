@@ -1,22 +1,33 @@
 #include "handler.hpp"
-#include "data.hpp"
 
 using Tokens = std::vector<std::string>;
 using CommandFunction = std::function<Command(Tokens *)>;
 
+// UDP commands
 Command login(Tokens *);
 Command logout(Tokens *);
 Command unregister(Tokens *);
 Command myauctions(Tokens *);
 Command exituser(Tokens *);
+// TCP commands
+Command openAuction(Tokens *);
+Command closeAuction(Tokens *);
+Command sendAsset(Tokens *);
+Command placeBid(Tokens *);
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
+    // UDP commands
     {"LIN", login},
     {"LOU", logout},
     {"UNR", unregister},
-    {"LMA", myauctions}};
+    {"LMA", myauctions},
+    // TCP commands
+    {"OPA", openAuction},
+    {"CLS", closeAuction},
+    {"SAS", sendAsset},
+    {"BID", placeBid}};
 
-Tokens parse_buffer(char *buffer)
+Tokens parseBuffer(char *buffer)
 {
 
     // Make the buffer a cpp string
@@ -38,7 +49,7 @@ Tokens parse_buffer(char *buffer)
     return tokens;
 }
 
-void diparse_buffer(char *buffer, Tokens *tokens)
+void diparseBuffer(char *buffer, Tokens *tokens)
 {
     std::string result = "";
     for (auto word : *tokens)
@@ -50,17 +61,17 @@ void diparse_buffer(char *buffer, Tokens *tokens)
     std::strcpy(buffer, result.c_str());
 }
 
-Command handle_request(char *buffer)
+Command handleRequest(char *buffer)
 {
 
-    Tokens tokens = parse_buffer(buffer);
+    Tokens tokens = parseBuffer(buffer);
     auto it = command_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
     if (it != command_map.end())
     {
         Command result = it->second(&tokens);
-        diparse_buffer(buffer, &tokens);
+        diparseBuffer(buffer, &tokens);
         return result;
     }
 
@@ -83,7 +94,6 @@ Command login(Tokens *token)
         loginUser(uid);
         response.push_back("RLI");
         response.push_back("REG");
-        // Not loged in
     }
     else
     {
