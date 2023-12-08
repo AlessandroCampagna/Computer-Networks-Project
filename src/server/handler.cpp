@@ -1,19 +1,6 @@
 #include "handler.hpp"
 
-using Tokens = std::vector<std::string>;
-using CommandFunction = std::function<Command(Tokens *)>;
-
-// UDP commands
-Command login(Tokens *);
-Command logout(Tokens *);
-Command unregister(Tokens *);
-Command myauctions(Tokens *);
-Command exituser(Tokens *);
-// TCP commands
-Command openAuction(Tokens *);
-Command closeAuction(Tokens *);
-Command sendAsset(Tokens *);
-Command placeBid(Tokens *);
+// TODO: Implement autentication logic
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
     // UDP commands
@@ -87,8 +74,8 @@ Command login(Tokens *token)
     std::string uid = (*token)[1];
     std::string password = (*token)[2];
 
-    // Check if the user exists in the database
-    if (isUser(uid) == false || isPassword(uid, "") == true)
+    // Check if the user exists
+    if (!isUser(uid) || isPassword(uid, ""))
     {
         createUser(uid, password);
         loginUser(uid);
@@ -97,7 +84,7 @@ Command login(Tokens *token)
     }
     else
     {
-        if (isPassword(uid, password) == false)
+        if (!isPassword(uid, password))
         {
             response.push_back("RLI");
             response.push_back("NOK");
@@ -124,13 +111,13 @@ Command logout(Tokens *token)
     std::string uid = (*token)[1];
     std::string password = (*token)[2];
 
-    // Check if the user dose not exists in the database
-    if (isUser(uid) == false)
+    // Check if the user dose not exists
+    if (!isUser(uid))
     {
         response.push_back("RLO");
         response.push_back("UNR");
     }
-    else if (isLogin(uid) == false)
+    else if (!isLogin(uid))
     {
         response.push_back("RLO");
         response.push_back("NOK");
@@ -155,13 +142,13 @@ Command unregister(Tokens *token)
     std::string uid = (*token)[1];
     std::string password = (*token)[2];
 
-    // Check if the user dose not exists in the database
-    if (isUser(uid) == false)
+    // Check if the user dose not exist
+    if (!isUser(uid))
     {
         response.push_back("RUR");
         response.push_back("UNR");
     }
-    else if (isPassword(uid, password) == false)
+    else if (!isPassword(uid, password))
     {
         response.push_back("RUR");
         response.push_back("NOK");
@@ -184,12 +171,12 @@ Command myauctions(Tokens *token)
 
     std::string uid = (*token)[1];
 
-    if (isLogin(uid) == false)
+    if (!isLogin(uid))
     {
         response.push_back("RMA");
         response.push_back("NLG");
     }
-    else if (areAuctions(uid) == false)
+    else if (!areUserAuctions(uid))
     {
         response.push_back("RMA");
         response.push_back("NOK");
@@ -208,18 +195,93 @@ Command myauctions(Tokens *token)
     return Command::COMAND_COMPLETED;
 }
 
-Command openAuction(Tokens *token){
+Command openAuction(Tokens *token)
+{
+
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
+    std::string name = (*token)[3];
+    std::string startValue = (*token)[4];
+    std::string timeActive = (*token)[5];
+    std::string fileName = (*token)[6];
+    std::string fileSize = (*token)[7];
+    std::string fileData = (*token)[8];
+
+    if (!isLogin(uid))
+    {
+        response.push_back("ROA");
+        response.push_back("NLG");
+        *token = response;
+        return Command::COMAND_COMPLETED;
+    }
+
+    std::string aid = createAuction(uid, name, startValue, timeActive, fileName, fileSize, fileData);
+    if (aid == "") //TODO: implement fs error logic
+    {
+        response.push_back("ROA");
+        response.push_back("NOK");
+        *token = response;
+        return Command::COMAND_COMPLETED;
+    }
+
+    response.push_back("ROA");
+    response.push_back("OK");
+    response.push_back(aid);
+    *token = response;
     return Command::COMAND_COMPLETED;
 }
 
-Command closeAuction(Tokens *token){
+Command closeAuction(Tokens *token)
+{
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
+    std::string aid = (*token)[3]; 
+
+    int error = removeAuction(aid);
+    if (error == -1) {
+        response.push_back("RCL");
+        response.push_back("NOK"); //TODO: Implement real error response
+        *token = response;
+        return Command::COMAND_COMPLETED;    
+    }
+
+    response.push_back("RCL");
+    response.push_back("OK");
+    *token = response;
     return Command::COMAND_COMPLETED;
 }
 
-Command sendAsset(Tokens *token){
+Command sendAsset(Tokens *token)
+{
+    //TODO: Implement TCP file trasnfer
     return Command::COMAND_COMPLETED;
 }
 
-Command placeBid(Tokens *token){
+Command placeBid(Tokens *token)
+{
+    Tokens response;
+
+    std::string uid = (*token)[1];
+    std::string password = (*token)[2];
+    std::string aid = (*token)[3]; 
+    std::string value = (*token)[4];
+
+    int error = createBid(uid, aid, value);
+    if (error == -1){ //TODO: Implemnet errors
+        response.push_back("RBD");
+        response.push_back("NOK");
+        *token = response;
+        return Command::COMAND_COMPLETED;  
+    }
+
+    response.push_back("RBD");
+    response.push_back("OK");
+    *token = response;
     return Command::COMAND_COMPLETED;
 }

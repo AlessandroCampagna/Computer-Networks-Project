@@ -17,6 +17,20 @@ enum Command
     COMMAND_SEND_IMAGE,
 };
 
+using Tokens = std::vector<std::string>;
+using CommandFunction = std::function<Command(Tokens *)>;
+
+// UDP commands
+Command login(Tokens *);
+Command logout(Tokens *);
+Command unregister(Tokens *);
+Command myauctions(Tokens *);
+// TCP commands
+Command openAuction(Tokens *);
+Command closeAuction(Tokens *);
+Command sendAsset(Tokens *);
+Command placeBid(Tokens *);
+
 Command handleRequest(char *buffer);
 
 #endif
