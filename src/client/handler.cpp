@@ -288,9 +288,11 @@ void myauctions_response(Tokens *tokens)
 
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
         {
-            printf("%s\n", it->c_str());
+            std::string aid = *it;
+            std::string state = *(it + 1);
+            printf("Auction ID: %s, State: %s\n", aid.c_str(), state == "1" ? "Active" : "Inactive");
         }
     }
     else if ((*tokens)[1] == "NOK")
@@ -326,9 +328,11 @@ void mybids_response(Tokens *tokens)
 
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
         {
-            printf("%s\n", it->c_str());
+            std::string aid = *it;
+            std::string state = *(it + 1);
+            printf("Auction ID: %s, State: %s\n", aid.c_str(), state == "1" ? "Active" : "Inactive");
         }
     }
     else if ((*tokens)[1] == "NOK")
@@ -362,9 +366,11 @@ void list_response(Tokens *tokens)
 {
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
         {
-            printf("%s\n", it->c_str());
+            std::string aid = *it;
+            std::string state = *(it + 1);
+            printf("Auction ID: %s, State: %s\n", aid.c_str(), state == "1" ? "Active" : "Inactive");
         }
     }
     else if ((*tokens)[1] == "NOK")
@@ -405,14 +411,14 @@ void show_record_response(Tokens *tokens)
         printf("Start Date and Time: %s\n", (*tokens)[6].c_str());
         printf("Auction Duration: %s seconds\n", (*tokens)[7].c_str());
 
-        int numBids = (tokens->size() - 8) / 5;
-        for (int i = 0; i < numBids; i++)
+        int startIndex = 8;
+        while ((*tokens)[startIndex] == "B")
         {
-            int startIndex = 8 + i * 5;
-            printf("Bidder UID: %s\n", (*tokens)[startIndex].c_str());
-            printf("Bid Value: %s\n", (*tokens)[startIndex + 1].c_str());
-            printf("Bid Date and Time: %s\n", (*tokens)[startIndex + 2].c_str());
-            printf("Bid Time Elapsed: %s seconds\n", (*tokens)[startIndex + 3].c_str());
+            printf("Bidder UID: %s\n", (*tokens)[startIndex + 1].c_str());
+            printf("Bid Value: %s\n", (*tokens)[startIndex + 2].c_str());
+            printf("Bid Date and Time: %s\n", (*tokens)[startIndex + 3].c_str());
+            printf("Bid Time Elapsed: %s seconds\n\n", (*tokens)[startIndex + 4].c_str());
+            startIndex += 5;
         }
 
         if ((*tokens)[tokens->size() - 2] == "E")
