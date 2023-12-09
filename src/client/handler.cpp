@@ -279,7 +279,7 @@ ConnectionType show_record(Tokens* tokens){
 }
 
 void  show_record_response(Tokens* token){
-
+    return;
 }
 
 // -------------------- TCP -------------------- //
@@ -295,7 +295,7 @@ ConnectionType open(Tokens* tokens) {
     std::string fname = (*tokens)[1].substr(6);
     tokens->erase(tokens->begin() + 1); // Remove token on index 1
 
-    std::string filepath = folderPath + fname;
+    std::string filepath = ASSETS_PATH + fname;
     std::filesystem::path path(filepath);
     if (!std::filesystem::exists(path)) return ConnectionType::INVALID;
     std::uintmax_t fileSize = std::filesystem::file_size(path);
@@ -320,10 +320,6 @@ ConnectionType open(Tokens* tokens) {
 }
 
 void open_response(Tokens* tokens) {
-    if (tokens->size() != 3) {
-        // Invalid response format
-        return;
-    }
 
     std::string status = (*tokens)[1];
     std::string AID = (*tokens)[2];
@@ -348,6 +344,8 @@ void open_response(Tokens* tokens) {
         printf("unknown status\n");
     }
 }
+
+
 
 
 // -------------------- EXIT -------------------- //
