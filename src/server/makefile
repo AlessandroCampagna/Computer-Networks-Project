@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-Wall -g
+CFLAGS=-Wall -g -std=c++17
 OUTDIR=$(PWD)
 
 all:
