@@ -1,7 +1,6 @@
 #ifndef USER_H
 #define USER_H
 
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -21,24 +20,24 @@
 #include <filesystem>
 #include <fstream>
 
-
 #define PORT 58017
 #define BUFFER_SIZE 128
 
-#define ASSETS_PATH  = "../../ASSETS/";
+#define ASSETS_PATH "../../ASSETS/"
 
 extern std::string uid;
 extern std::string password;
 extern bool logged;
 
-enum ConnectionType {
+enum ConnectionType
+{
     UDP,
     TCP,
     EXIT,
     INVALID
 };
 
-ConnectionType handle_command(char* buffer);
-void handle_response(char* buffer);
+ConnectionType handle_command(char *buffer);
+void handle_response(char *buffer);
 
 #endif

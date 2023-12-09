@@ -1,20 +1,37 @@
-#include "user.h"
+#include "user.hpp"
 
 using Tokens = std::vector<std::string>;
-using CommandFunction = std::function<ConnectionType(Tokens*)>;
-using ResponseFunction = std::function<void(Tokens*)>;
+using CommandFunction = std::function<ConnectionType(Tokens *)>;
+using ResponseFunction = std::function<void(Tokens *)>;
 
 Tokens parse_buffer(char *buffer);
-void diparse_buffer(char* buffer, Tokens* tokens);
+void diparse_buffer(char *buffer, Tokens *tokens);
 
-ConnectionType login(Tokens*); void login_response(Tokens*);
-ConnectionType logout(Tokens*); void logout_response(Tokens*);
-ConnectionType unregister(Tokens*); void unregister_response(Tokens*);
-ConnectionType myauctions(Tokens*); void myauctions_response(Tokens*);
-ConnectionType mybids(Tokens*); void mybids_response(Tokens*);
-ConnectionType list(Tokens*); void list_response(Tokens*);
-ConnectionType show_record(Tokens*); void show_record_response(Tokens*);
-ConnectionType exituser(Tokens*);
+ConnectionType login(Tokens *);
+void login_response(Tokens *);
+ConnectionType logout(Tokens *);
+void logout_response(Tokens *);
+ConnectionType unregister(Tokens *);
+void unregister_response(Tokens *);
+ConnectionType myauctions(Tokens *);
+void myauctions_response(Tokens *);
+ConnectionType mybids(Tokens *);
+void mybids_response(Tokens *);
+ConnectionType list(Tokens *);
+void list_response(Tokens *);
+ConnectionType show_record(Tokens *);
+void show_record_response(Tokens *);
+
+ConnectionType open(Tokens *);
+void open_response(Tokens *);
+ConnectionType close_auction(Tokens *);
+void close_response(Tokens *);
+ConnectionType show_asset(Tokens *);
+void show_asset_response(Tokens *);
+ConnectionType bid(Tokens *);
+void bid_response(Tokens *);
+
+ConnectionType exituser(Tokens *);
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
     {"login", login},
@@ -28,8 +45,13 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"l", list},
     {"show_record", show_record},
     {"sr", show_record},
-    {"exit", exituser}
-};
+    {"open", open},
+    {"close", close_auction},
+    {"show_asset", show_asset},
+    {"sa", show_asset},
+    {"bid", bid},
+    {"b", bid},
+    {"exit", exituser}};
 
 const std::unordered_map<std::string, ResponseFunction> response_map = {
     {"RLI", login_response},
@@ -38,22 +60,27 @@ const std::unordered_map<std::string, ResponseFunction> response_map = {
     {"RMA", myauctions_response},
     {"RMB", mybids_response},
     {"RLS", list_response},
-    {"RRC", show_record_response}
-};
+    {"RRC", show_record_response},
+    {"ROA", open_response},
+    {"RCL", close_response},
+    {"RSA", show_asset_response},
+    {"RBD", bid_response}};
 
 std::string uid;
 std::string password;
-bool logged=false;
+bool logged = false;
 
-ConnectionType handle_command(char* buffer) {
+ConnectionType handle_command(char *buffer)
+{
 
-    buffer[strlen(buffer)-1] = '\0'; // remove the last \n
+    buffer[strlen(buffer) - 1] = '\0'; // remove the last \n
     Tokens tokens = parse_buffer(buffer);
-    
+
     auto it = command_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
-    if (it != command_map.end()) {
+    if (it != command_map.end())
+    {
         ConnectionType result = it->second(&tokens);
         diparse_buffer(buffer, &tokens);
         return result;
@@ -63,41 +90,47 @@ ConnectionType handle_command(char* buffer) {
     return ConnectionType::INVALID;
 }
 
-void handle_response(char* buffer){
-    
-    buffer[strlen(buffer)-1] = '\0'; // remove the last \n
+void handle_response(char *buffer)
+{
+
+    buffer[strlen(buffer) - 1] = '\0'; // remove the last \n
     Tokens tokens = parse_buffer(buffer);
     auto it = response_map.find(tokens[0]);
 
     // If the command is found, execute the associated function and return its value
-    if (it != response_map.end()) {
+    if (it != response_map.end())
+    {
         it->second(&tokens);
     }
 
     return;
 }
 
-Tokens parse_buffer(char *buffer) {
+Tokens parse_buffer(char *buffer)
+{
 
     // Make the buffer a cpp string
     std::string str(buffer);
-    
+
     // Split the string into tokens
     std::string delimiter = " ";
     Tokens tokens;
     std::string token;
     std::istringstream tokenStream(str);
 
-    while (std::getline(tokenStream, token, delimiter[0])) {
+    while (std::getline(tokenStream, token, delimiter[0]))
+    {
         tokens.push_back(token);
     }
 
     return tokens;
 }
 
-void diparse_buffer(char* buffer, Tokens* tokens) {
+void diparse_buffer(char *buffer, Tokens *tokens)
+{
     std::string result = "";
-    for (auto word :  *tokens) {
+    for (auto word : *tokens)
+    {
         result += word + " ";
     }
     result.pop_back(); // remove the last space
@@ -105,29 +138,36 @@ void diparse_buffer(char* buffer, Tokens* tokens) {
     std::strcpy(buffer, result.c_str());
 }
 
-bool validator(const std::string& uid, const std::string& password) {
-    // Check if uid is 6 digits and numeric
-    std::regex uidRegex("\\d{6}");
-    if (!std::regex_match(uid, uidRegex)) {
+bool validator(const std::string &uid, const std::string &password)
+{
+    // Check if uid is up to 6 digits and numeric
+    std::regex uidRegex("\\d{1,6}");
+    if (!std::regex_match(uid, uidRegex))
+    {
         return false;
     }
-    
+
     // Check if password is 8 digits and alphanumeric
     std::regex passwordRegex("[a-zA-Z0-9]{8}");
-    if (!std::regex_match(password, passwordRegex)) {
+    if (!std::regex_match(password, passwordRegex))
+    {
         return false;
     }
-    
+
     return true;
 }
 
 // -------------------- UDP -------------------- //
 
 // Define the functions for each command
-ConnectionType login(Tokens* tokens) {
-    if ((tokens->size() != 3) || (!validator((*tokens)[1], (*tokens)[2]))) {
+ConnectionType login(Tokens *tokens)
+{
+    if ((tokens->size() != 3) || (!validator((*tokens)[1], (*tokens)[2])))
+    {
         return ConnectionType::INVALID;
-    }else{
+    }
+    else
+    {
         (*tokens)[0] = "LIN";
         uid = (*tokens)[1];
         password = (*tokens)[2];
@@ -135,23 +175,35 @@ ConnectionType login(Tokens* tokens) {
     }
 }
 
-void login_response(Tokens* tokens) {
-    if ((*tokens)[1] == "OK") {
+void login_response(Tokens *tokens)
+{
+    if ((*tokens)[1] == "OK")
+    {
         printf("successful login\n");
         logged = true;
-    } else if ((*tokens)[1] == "NOK") {
+    }
+    else if ((*tokens)[1] == "NOK")
+    {
         printf("incorrect login attempt\n");
-    } else if ((*tokens)[1] == "REG") {
+    }
+    else if ((*tokens)[1] == "REG")
+    {
         printf("new user registered\n");
-    } else {
+    }
+    else
+    {
         printf("unknown response\n");
     }
 }
 
-ConnectionType logout(Tokens* tokens) {
-    if (tokens->size() != 1) {
+ConnectionType logout(Tokens *tokens)
+{
+    if (tokens->size() != 1)
+    {
         return ConnectionType::INVALID;
-    }else{
+    }
+    else
+    {
         (*tokens)[0] = "LOU";
         tokens->push_back(uid);
         tokens->push_back(password);
@@ -159,152 +211,244 @@ ConnectionType logout(Tokens* tokens) {
     }
 }
 
-void logout_response(Tokens* tokens) {
-    if ((*tokens)[1] == "OK") {
+void logout_response(Tokens *tokens)
+{
+    if ((*tokens)[1] == "OK")
+    {
         printf("successful logout\n");
         logged = false;
-    } else if ((*tokens)[1] == "NOK") {
+    }
+    else if ((*tokens)[1] == "NOK")
+    {
         printf("user not logged in\n");
-    } else if ((*tokens)[1] == "UNR") {
+    }
+    else if ((*tokens)[1] == "UNR")
+    {
         printf("unknown user\n");
-    } else {
+    }
+    else
+    {
         printf("unknown response\n");
     }
 }
 
-ConnectionType unregister(Tokens* tokens) {
-    if (tokens->size() != 1) {
+ConnectionType unregister(Tokens *tokens)
+{
+    if (tokens->size() != 1)
+    {
         return ConnectionType::INVALID;
-    }else{
-    (*tokens)[0] = "UNR";
+    }
+    else
+    {
+        (*tokens)[0] = "UNR";
         tokens->push_back(uid);
         tokens->push_back(password);
         return ConnectionType::UDP;
     }
 }
 
-void unregister_response(Tokens* tokens) {
-    
-    if ((*tokens)[1] == "OK") {
+void unregister_response(Tokens *tokens)
+{
+
+    if ((*tokens)[1] == "OK")
+    {
         logged = false;
         printf("successful unregister\n");
-    } else if ((*tokens)[1] == "NOK") {
+    }
+    else if ((*tokens)[1] == "NOK")
+    {
         printf("incorrect unregister attempt\n");
-    } else if ((*tokens)[1] == "UNR") {
+    }
+    else if ((*tokens)[1] == "UNR")
+    {
         printf("unknown user\n");
-    } else {
+    }
+    else
+    {
         printf("unknown response\n");
     }
 }
 
-
-ConnectionType myauctions(Tokens* tokens) {
-    if (tokens->size() != 1) {
+ConnectionType myauctions(Tokens *tokens)
+{
+    if (tokens->size() != 1)
+    {
         return ConnectionType::INVALID;
-    }else{
+    }
+    else
+    {
         (*tokens)[0] = "LMA";
         tokens->push_back(uid);
         return ConnectionType::UDP;
     }
 }
 
-void myauctions_response(Tokens* tokens) {
-    
-    if ((*tokens)[1] == "OK") {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
+void myauctions_response(Tokens *tokens)
+{
+
+    if ((*tokens)[1] == "OK")
+    {
+        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it)
+        {
             printf("%s\n", it->c_str());
         }
-    } else if ((*tokens)[1] == "NOK") {
+    }
+    else if ((*tokens)[1] == "NOK")
+    {
         printf("user has no ongoing auctions\n");
-    } else if ((*tokens)[1] == "NLG") {
+    }
+    else if ((*tokens)[1] == "NLG")
+    {
         printf("user not logged in\n");
-    } else {
+    }
+    else
+    {
         printf("unknown response\n");
     }
 }
 
-ConnectionType mybids(Tokens* tokens){
-    if (tokens->size() != 1) {
+ConnectionType mybids(Tokens *tokens)
+{
+    if (tokens->size() != 1)
+    {
         return ConnectionType::INVALID;
-    }else{
+    }
+    else
+    {
         (*tokens)[0] = "LMB";
         tokens->push_back(uid);
         return ConnectionType::UDP;
     }
 }
 
-void mybids_response(Tokens* tokens){
-    
-    if ((*tokens)[1] == "OK") {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
+void mybids_response(Tokens *tokens)
+{
+
+    if ((*tokens)[1] == "OK")
+    {
+        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it)
+        {
             printf("%s\n", it->c_str());
         }
-    } else if ((*tokens)[1] == "NOK") {
+    }
+    else if ((*tokens)[1] == "NOK")
+    {
         printf("user has no ongoing bids\n");
-    } else if ((*tokens)[1] == "NLG") {
+    }
+    else if ((*tokens)[1] == "NLG")
+    {
         printf("user not logged in\n");
-    } else {
+    }
+    else
+    {
         printf("unknown response\n");
     }
 }
 
-ConnectionType list(Tokens* tokens){
-    if (tokens->size() != 1) {
+ConnectionType list(Tokens *tokens)
+{
+    if (tokens->size() != 1)
+    {
         return ConnectionType::INVALID;
-    }else{
+    }
+    else
+    {
         (*tokens)[0] = "LST";
         return ConnectionType::UDP;
     }
 }
 
-void list_response(Tokens* tokens){
-     if ((*tokens)[1] == "OK") {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it) {
+void list_response(Tokens *tokens)
+{
+    if ((*tokens)[1] == "OK")
+    {
+        for (auto it = tokens->begin() + 2; it != tokens->end(); ++it)
+        {
             printf("%s\n", it->c_str());
         }
-    } else if ((*tokens)[1] == "NOK") {
+    }
+    else if ((*tokens)[1] == "NOK")
+    {
         printf("no auctions are currently active\n");
-    } else {
+    }
+    else
+    {
         printf("unknown response\n");
     }
 }
 
-ConnectionType show_record(Tokens* tokens){
-    if (tokens->size() != 2) {
+ConnectionType show_record(Tokens *tokens)
+{
+    if (tokens->size() != 2)
+    {
         return ConnectionType::INVALID;
-    }else{
+    }
+    else
+    {
         (*tokens)[0] = "SRC";
         return ConnectionType::UDP;
     }
 }
 
-void  show_record_response(Tokens* token){
-    return;
+void show_record_response(Tokens *tokens)
+{
+    if ((*tokens)[1] == "NOK")
+    {
+        printf("Auction does not exist\n");
+    }
+    else if ((*tokens)[1] == "OK")
+    {
+        printf("Host UID: %s\n", (*tokens)[2].c_str());
+        printf("Auction Name: %s\n", (*tokens)[3].c_str());
+        printf("Asset File Name: %s\n", (*tokens)[4].c_str());
+        printf("Start Value: %s\n", (*tokens)[5].c_str());
+        printf("Start Date and Time: %s\n", (*tokens)[6].c_str());
+        printf("Auction Duration: %s seconds\n", (*tokens)[7].c_str());
+
+        int numBids = (tokens->size() - 8) / 5;
+        for (int i = 0; i < numBids; i++)
+        {
+            int startIndex = 8 + i * 5;
+            printf("Bidder UID: %s\n", (*tokens)[startIndex].c_str());
+            printf("Bid Value: %s\n", (*tokens)[startIndex + 1].c_str());
+            printf("Bid Date and Time: %s\n", (*tokens)[startIndex + 2].c_str());
+            printf("Bid Time Elapsed: %s seconds\n", (*tokens)[startIndex + 3].c_str());
+        }
+
+        if ((*tokens)[tokens->size() - 2] == "E")
+        {
+            printf("Auction Closing Date and Time: %s\n", (*tokens)[tokens->size() - 2].c_str());
+            printf("Auction Closing Time Elapsed: %s seconds\n", (*tokens)[tokens->size() - 1].c_str());
+        }
+    }
 }
 
 // -------------------- TCP -------------------- //
 
-ConnectionType open(Tokens* tokens) {
+ConnectionType open(Tokens *tokens)
+{
 
-    if (tokens->size() != 6 ) {
+    if (tokens->size() != 5)
+    {
         return ConnectionType::INVALID;
     }
 
-    // Check if the format of the token 3 is "asset_*"
-    if ((*tokens)[1].compare(0, 6, "asset_") != 0) return ConnectionType::INVALID;
-    std::string fname = (*tokens)[1].substr(6);
-    tokens->erase(tokens->begin() + 1); // Remove token on index 1
+    if ((*tokens)[2].compare(0, 6, "asset_") != 0)
+        return ConnectionType::INVALID;
+    std::string fileName = (*tokens)[2].substr(6);
+    tokens->erase(tokens->begin() + 2);
 
-    std::string filepath = ASSETS_PATH + fname;
-    std::filesystem::path path(filepath);
-    if (!std::filesystem::exists(path)) return ConnectionType::INVALID;
-    std::uintmax_t fileSize = std::filesystem::file_size(path);
+    if (!std::filesystem::exists(ASSETS_PATH + fileName))
+        return ConnectionType::INVALID;
+    std::uintmax_t fileSize = std::filesystem::file_size(ASSETS_PATH + fileName);
 
-    std::ifstream file(filepath);
-    if (!file) return ConnectionType::INVALID;
+    std::ifstream file(ASSETS_PATH + fileName);
+    if (!file)
+        return ConnectionType::INVALID;
     std::string fileData;
     std::string line;
-    while (std::getline(file, line)) {
+    while (std::getline(file, line))
+    {
         fileData += line + "\n";
     }
     file.close();
@@ -312,44 +456,166 @@ ConnectionType open(Tokens* tokens) {
     (*tokens)[0] = "OPA";
     tokens->insert(tokens->begin() + 1, uid);
     tokens->insert(tokens->begin() + 2, password);
-    tokens->push_back(fname);
+    tokens->push_back(fileName);
     tokens->push_back(std::to_string(fileSize));
     tokens->push_back(fileData);
 
     return ConnectionType::TCP;
 }
 
-void open_response(Tokens* tokens) {
+void open_response(Tokens *tokens)
+{
 
     std::string status = (*tokens)[1];
     std::string AID = (*tokens)[2];
 
-    if (status == "NOK") {
-        // Auction could not be started
-        // Handle the NOK status
+    if (status == "NOK")
+    {
         printf("auction could not be started\n");
-    } else if (status == "NLG") {
-        // User was not logged in
-        // Handle the NLG status
+    }
+    else if (status == "NLG")
+    {
         printf("user was not logged in\n");
-    } else if (status == "OK") {
-        // Auction started successfully
-        // Handle the OK status
-        // Store the local copy of the asset file using the filename Fname
+    }
+    else if (status == "OK")
+    {
         printf("AID: %s\n", AID.c_str());
-
-    } else {
-        // Unknown status
-        // Handle the unknown status
+    }
+    else
+    {
         printf("unknown status\n");
     }
 }
 
+ConnectionType close_auction(Tokens *tokens)
+{
+    if (tokens->size() != 2)
+    {
+        return ConnectionType::INVALID;
+    }
 
+    (*tokens)[0] = "CLS";
+    tokens->insert(tokens->begin() + 1, uid);
+    tokens->insert(tokens->begin() + 2, password);
 
+    return ConnectionType::TCP;
+}
+
+void close_response(Tokens *tokens)
+{
+    std::string status = (*tokens)[1];
+
+    if (status == "OK")
+    {
+        printf("Auction was successfully closed.\n");
+    }
+    else if (status == "NLG")
+    {
+        printf("User was not logged in.\n");
+    }
+    else if (status == "EAU")
+    {
+        printf("Auction does not exist.\n");
+    }
+    else if (status == "EOW")
+    {
+        printf("Auction is not owned by user.\n");
+    }
+    else if (status == "END")
+    {
+        printf("Auction owned by user has already finished.\n");
+    }
+    else
+    {
+        printf("Unknown status.\n");
+    }
+}
+
+ConnectionType show_asset(Tokens *tokens)
+{
+    if (tokens->size() != 2)
+    {
+        return ConnectionType::INVALID;
+    }
+
+    (*tokens)[0] = "SAS";
+
+    return ConnectionType::TCP;
+}
+
+void show_asset_response(Tokens *tokens)
+{
+    std::string status = (*tokens)[1];
+
+    if (status == "OK")
+    {
+        std::string fileName = (*tokens)[2];
+        std::string fileSize = (*tokens)[3];
+        std::string fileData = (*tokens)[4];
+
+        std::ofstream file(ASSETS_PATH + fileName);
+        file << fileData;
+        file.close();
+
+        printf("Asset in directory: %s\n", ASSETS_PATH);
+    }
+    else if (status == "NOK")
+    {
+        printf("Asset does not exist.\n");
+    }
+    else
+    {
+        printf("Unknown status.\n");
+    }
+}
+
+ConnectionType bid(Tokens *tokens)
+{
+    if (tokens->size() != 3)
+    {
+        return ConnectionType::INVALID;
+    }
+
+    (*tokens)[0] = "BID";
+    tokens->insert(tokens->begin() + 1, uid);
+    tokens->insert(tokens->begin() + 2, password);
+
+    return ConnectionType::TCP;
+}
+
+void bid_response(Tokens *tokens)
+{
+    std::string status = (*tokens)[1];
+
+    if (status == "NLG")
+    {
+        printf("User was not logged in.\n");
+    }
+    else if (status == "NOK")
+    {
+        printf("Auction is not active.\n");
+    }
+    else if (status == "ACC")
+    {
+        printf("Bid was accepted.\n");
+    }
+    else if (status == "REF")
+    {
+        printf("Bid was refused because a larger bid has already been placed.\n");
+    }
+    else if (status == "ILG")
+    {
+        printf("User cannot make a bid in an auction hosted by themselves.\n");
+    }
+    else
+    {
+        printf("Unknown status.\n");
+    }
+}
 
 // -------------------- EXIT -------------------- //
 
-ConnectionType exituser(Tokens* tokens) {
+ConnectionType exituser(Tokens *tokens)
+{
     return ConnectionType::EXIT;
 }
