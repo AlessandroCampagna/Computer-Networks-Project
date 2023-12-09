@@ -185,11 +185,11 @@ void *handle_TCP(char *ASportStr)
             struct timeval timeout;
             timeout.tv_sec = TIME_OUT; // timeout after 5 seconds
             timeout.tv_usec = 0;       // not init'ing this can cause strange errors
-            setsockopt(TCPconnection.socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+            setsockopt(new_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 
             // Receive message
             addrlen = sizeof(addr);
-            n = recv(TCPconnection.socket, buffer, TCP_BUFFER_SIZE, 0);
+            n = recv(new_socket, buffer, TCP_BUFFER_SIZE, 0);
             if (n == -1)
             {
                 perror("(TCP)  Error receiving message");
@@ -212,7 +212,7 @@ void *handle_TCP(char *ASportStr)
             }
 
             printf("(TCP) Sending: %s\n", buffer);
-            n = send(TCPconnection.socket, buffer, n, 0);
+            n = send(new_socket, buffer, n, 0);
             if (n == -1)
             {
                 perror("(TCP) Error sending message");
