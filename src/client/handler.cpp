@@ -4,6 +4,9 @@ using Tokens = std::vector<std::string>;
 using CommandFunction = std::function<ConnectionType(Tokens *)>;
 using ResponseFunction = std::function<void(Tokens *)>;
 
+ConnectionType handle_command(char *buffer);
+void handle_response(char *buffer);
+
 Tokens parse_buffer(char *buffer);
 void diparse_buffer(char *buffer, Tokens *tokens);
 
@@ -72,8 +75,6 @@ bool logged = false;
 
 ConnectionType handle_command(char *buffer)
 {
-
-    buffer[strlen(buffer) - 1] = '\0'; // remove the last \n
     Tokens tokens = parse_buffer(buffer);
 
     auto it = command_map.find(tokens[0]);
@@ -92,8 +93,6 @@ ConnectionType handle_command(char *buffer)
 
 void handle_response(char *buffer)
 {
-
-    buffer[strlen(buffer) - 1] = '\0'; // remove the last \n
     Tokens tokens = parse_buffer(buffer);
     auto it = response_map.find(tokens[0]);
 
@@ -108,7 +107,7 @@ void handle_response(char *buffer)
 
 Tokens parse_buffer(char *buffer)
 {
-
+    buffer[strlen(buffer) - 1] = '\0';
     // Make the buffer a cpp string
     std::string str(buffer);
 
@@ -446,15 +445,10 @@ ConnectionType open(Tokens *tokens)
         return ConnectionType::INVALID;
     std::uintmax_t fileSize = std::filesystem::file_size(ASSETS_PATH + fileName);
 
-    std::ifstream file(ASSETS_PATH + fileName);
+    std::ifstream file(ASSETS_PATH + fileName, std::ios::binary);
     if (!file)
         return ConnectionType::INVALID;
-    std::string fileData;
-    std::string line;
-    while (std::getline(file, line))
-    {
-        fileData += line + "\n";
-    }
+    std::string fileData((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
 
     (*tokens)[0] = "OPA";

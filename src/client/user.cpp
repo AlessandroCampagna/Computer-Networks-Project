@@ -1,5 +1,7 @@
 #include "user.hpp"
 
+void initializer(int argc, char *argv[], char *&ASIP, int &ASport, char *ASportStr);
+
 int main(int argc, char *argv[])
 {
     char *ASIP = NULL;
@@ -13,29 +15,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in addr;
     char buffer[BUFFER_SIZE];
 
-    int opt;
-    while ((opt = getopt(argc, argv, "n:p:")) != -1)
-    {
-        switch (opt)
-        {
-        case 'n':
-            ASIP = strdup(optarg);
-            break;
-        case 'p':
-            ASport = atoi(optarg);
-            break;
-        default:
-            fprintf(stderr, "Usage: %s [-n ASIP] [-p ASport]\n", argv[0]);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    // Default settings
-    if (ASIP == NULL)
-        ASIP = strdup("localhost"); // default IP
-    if (ASport == -1)
-        ASport = PORT;                // default port
-    sprintf(ASportStr, "%d", ASport); // convert port to string
+    initializer(argc, argv, ASIP, ASport, ASportStr);
 
     fd_udp = socket(AF_INET, SOCK_DGRAM, 0); // UDP socket
 
@@ -51,12 +31,10 @@ int main(int argc, char *argv[])
     {
 
         fgets(buffer, sizeof(buffer), stdin);
-
         ConnectionType connectionType = handle_command(buffer);
 
         if (connectionType == UDP)
         {
-
             n = sendto(fd_udp, buffer, strlen(buffer), 0, res_udp->ai_addr, res_udp->ai_addrlen);
             if (n == -1) /*error*/
                 exit(1);
@@ -73,9 +51,7 @@ int main(int argc, char *argv[])
         }
         else if (connectionType == TCP)
         {
-
             fd_tcp = socket(AF_INET, SOCK_STREAM, 0); // TCP socket
-
             memset(&hints_tcp, 0, sizeof hints_tcp);
             hints_tcp.ai_family = AF_INET;       // IPv4
             hints_tcp.ai_socktype = SOCK_STREAM; // TCP socket
@@ -113,4 +89,31 @@ int main(int argc, char *argv[])
 
     free(ASIP);
     return 0;
+}
+
+void initializer(int argc, char *argv[], char *&ASIP, int &ASport, char *ASportStr)
+{
+    int opt;
+    while ((opt = getopt(argc, argv, "n:p:")) != -1)
+    {
+        switch (opt)
+        {
+        case 'n':
+            ASIP = strdup(optarg);
+            break;
+        case 'p':
+            ASport = atoi(optarg);
+            break;
+        default:
+            fprintf(stderr, "Usage: %s [-n ASIP] [-p ASport]\n", argv[0]);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // Default settings
+    if (ASIP == NULL)
+        ASIP = strdup("localhost"); // default IP
+    if (ASport == -1)
+        ASport = PORT;                // default port
+    sprintf(ASportStr, "%d", ASport); // convert port to string
 }
