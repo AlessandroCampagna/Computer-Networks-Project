@@ -439,9 +439,7 @@ ConnectionType open(Tokens *tokens)
         return ConnectionType::INVALID;
     }
 
-    if ((*tokens)[2].compare(0, 6, "asset_") != 0)
-        return ConnectionType::INVALID;
-    std::string fileName = (*tokens)[2].substr(6);
+    std::string fileName = (*tokens)[2];
     tokens->erase(tokens->begin() + 2);
 
     if (!std::filesystem::exists(ASSETS_PATH + fileName))
