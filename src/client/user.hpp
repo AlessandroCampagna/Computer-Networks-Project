@@ -21,9 +21,11 @@
 #include <fstream>
 
 #define PORT 58017
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 6010
 
 #define ASSETS_PATH "../../ASSETS/"
+
+using Tokens = std::vector<std::string>;
 
 extern std::string uid;
 extern std::string password;
@@ -37,7 +39,7 @@ enum ConnectionType
     INVALID
 };
 
-ConnectionType handle_command(char *buffer);
-void handle_response(char *buffer);
+ConnectionType handle_command(Tokens *tokens);
+void handle_response(Tokens *tokens);
 
 #endif

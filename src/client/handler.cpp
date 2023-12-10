@@ -1,11 +1,7 @@
 #include "user.hpp"
 
-using Tokens = std::vector<std::string>;
 using CommandFunction = std::function<ConnectionType(Tokens *)>;
 using ResponseFunction = std::function<void(Tokens *)>;
-
-Tokens parse_buffer(char *buffer);
-void diparse_buffer(char *buffer, Tokens *tokens);
 
 ConnectionType login(Tokens *);
 void login_response(Tokens *);
@@ -70,72 +66,27 @@ std::string uid;
 std::string password;
 bool logged = false;
 
-ConnectionType handle_command(char *buffer)
+ConnectionType handle_command(Tokens *tokens)
 {
-
-    buffer[strlen(buffer) - 1] = '\0'; // remove the last \n
-    Tokens tokens = parse_buffer(buffer);
-
-    auto it = command_map.find(tokens[0]);
-
-    // If the command is found, execute the associated function and return its value
+    auto it = command_map.find((*tokens)[0]);
     if (it != command_map.end())
     {
-        ConnectionType result = it->second(&tokens);
-        diparse_buffer(buffer, &tokens);
+        ConnectionType result = it->second(tokens);
         return result;
     }
 
-    // If the command is not found, return an error value
     return ConnectionType::INVALID;
 }
 
-void handle_response(char *buffer)
+void handle_response(Tokens *tokens)
 {
-
-    buffer[strlen(buffer) - 1] = '\0'; // remove the last \n
-    Tokens tokens = parse_buffer(buffer);
-    auto it = response_map.find(tokens[0]);
-
-    // If the command is found, execute the associated function and return its value
+    auto it = response_map.find((*tokens)[0]);
     if (it != response_map.end())
     {
-        it->second(&tokens);
+        it->second(tokens);
     }
 
     return;
-}
-
-Tokens parse_buffer(char *buffer)
-{
-
-    // Make the buffer a cpp string
-    std::string str(buffer);
-
-    // Split the string into tokens
-    std::string delimiter = " ";
-    Tokens tokens;
-    std::string token;
-    std::istringstream tokenStream(str);
-
-    while (std::getline(tokenStream, token, delimiter[0]))
-    {
-        tokens.push_back(token);
-    }
-
-    return tokens;
-}
-
-void diparse_buffer(char *buffer, Tokens *tokens)
-{
-    std::string result = "";
-    for (auto word : *tokens)
-    {
-        result += word + " ";
-    }
-    result.pop_back(); // remove the last space
-    result += "\n";
-    std::strcpy(buffer, result.c_str());
 }
 
 bool validator(const std::string &uid, const std::string &password)
@@ -159,7 +110,6 @@ bool validator(const std::string &uid, const std::string &password)
 
 // -------------------- UDP -------------------- //
 
-// Define the functions for each command
 ConnectionType login(Tokens *tokens)
 {
     if ((tokens->size() != 3) || (!validator((*tokens)[1], (*tokens)[2])))
@@ -439,32 +389,18 @@ ConnectionType open(Tokens *tokens)
         return ConnectionType::INVALID;
     }
 
-    if ((*tokens)[2].compare(0, 6, "asset_") != 0)
-        return ConnectionType::INVALID;
-    std::string fileName = (*tokens)[2].substr(6);
+    std::string fileName = (*tokens)[2];
     tokens->erase(tokens->begin() + 2);
 
     if (!std::filesystem::exists(ASSETS_PATH + fileName))
         return ConnectionType::INVALID;
     std::uintmax_t fileSize = std::filesystem::file_size(ASSETS_PATH + fileName);
 
-    std::ifstream file(ASSETS_PATH + fileName);
-    if (!file)
-        return ConnectionType::INVALID;
-    std::string fileData;
-    std::string line;
-    while (std::getline(file, line))
-    {
-        fileData += line + "\n";
-    }
-    file.close();
-
     (*tokens)[0] = "OPA";
     tokens->insert(tokens->begin() + 1, uid);
     tokens->insert(tokens->begin() + 2, password);
     tokens->push_back(fileName);
     tokens->push_back(std::to_string(fileSize));
-    tokens->push_back(fileData);
 
     return ConnectionType::TCP;
 }
@@ -472,24 +408,21 @@ ConnectionType open(Tokens *tokens)
 void open_response(Tokens *tokens)
 {
 
-    std::string status = (*tokens)[1];
-    std::string AID = (*tokens)[2];
-
-    if (status == "NOK")
+    if ((*tokens)[1] == "NOK")
     {
         printf("auction could not be started\n");
     }
-    else if (status == "NLG")
+    else if ((*tokens)[1] == "NLG")
     {
         printf("user was not logged in\n");
     }
-    else if (status == "OK")
+    else if ((*tokens)[1] == "OK")
     {
-        printf("AID: %s\n", AID.c_str());
+        printf("AID: %s\n", (*tokens)[2].c_str());
     }
     else
     {
-        printf("unknown status\n");
+        printf("unknown Status;\n");
     }
 }
 
@@ -509,31 +442,30 @@ ConnectionType close_auction(Tokens *tokens)
 
 void close_response(Tokens *tokens)
 {
-    std::string status = (*tokens)[1];
 
-    if (status == "OK")
+    if ((*tokens)[1] == "OK")
     {
         printf("Auction was successfully closed.\n");
     }
-    else if (status == "NLG")
+    else if ((*tokens)[1] == "NLG")
     {
         printf("User was not logged in.\n");
     }
-    else if (status == "EAU")
+    else if ((*tokens)[1] == "EAU")
     {
         printf("Auction does not exist.\n");
     }
-    else if (status == "EOW")
+    else if ((*tokens)[1] == "EOW")
     {
         printf("Auction is not owned by user.\n");
     }
-    else if (status == "END")
+    else if ((*tokens)[1] == "END")
     {
         printf("Auction owned by user has already finished.\n");
     }
     else
     {
-        printf("Unknown status.\n");
+        printf("Unknown Status\n");
     }
 }
 
@@ -551,9 +483,8 @@ ConnectionType show_asset(Tokens *tokens)
 
 void show_asset_response(Tokens *tokens)
 {
-    std::string status = (*tokens)[1];
 
-    if (status == "OK")
+    if ((*tokens)[1] == "OK")
     {
         std::string fileName = (*tokens)[2];
         std::string fileSize = (*tokens)[3];
@@ -565,13 +496,13 @@ void show_asset_response(Tokens *tokens)
 
         printf("Asset in directory: %s\n", ASSETS_PATH);
     }
-    else if (status == "NOK")
+    else if ((*tokens)[1] == "NOK")
     {
         printf("Asset does not exist.\n");
     }
     else
     {
-        printf("Unknown status.\n");
+        printf("Unknown Status\n");
     }
 }
 
@@ -591,31 +522,30 @@ ConnectionType bid(Tokens *tokens)
 
 void bid_response(Tokens *tokens)
 {
-    std::string status = (*tokens)[1];
 
-    if (status == "NLG")
+    if ((*tokens)[1] == "NLG")
     {
         printf("User was not logged in.\n");
     }
-    else if (status == "NOK")
+    else if ((*tokens)[1] == "NOK")
     {
         printf("Auction is not active.\n");
     }
-    else if (status == "ACC")
+    else if ((*tokens)[1] == "ACC")
     {
         printf("Bid was accepted.\n");
     }
-    else if (status == "REF")
+    else if ((*tokens)[1] == "REF")
     {
         printf("Bid was refused because a larger bid has already been placed.\n");
     }
-    else if (status == "ILG")
+    else if ((*tokens)[1] == "ILG")
     {
         printf("User cannot make a bid in an auction hosted by themselves.\n");
     }
     else
     {
-        printf("Unknown status.\n");
+        printf("Unknown Status\n");
     }
 }
 
