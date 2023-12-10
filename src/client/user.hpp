@@ -25,8 +25,6 @@
 
 #define ASSETS_PATH "../../ASSETS/"
 
-using Tokens = std::vector<std::string>;
-
 extern std::string uid;
 extern std::string password;
 extern bool logged;
@@ -39,7 +37,7 @@ enum ConnectionType
     INVALID
 };
 
-ConnectionType handle_command(Tokens *tokens);
-void handle_response(Tokens *tokens);
+ConnectionType handle_command(char *buffer);
+void handle_response(char *buffer);
 
 #endif
