@@ -137,11 +137,19 @@ std::string findNextAuctionID()
     return std::to_string(count / 100 % 10) + std::to_string(count / 10 % 10) + std::to_string(count % 10);
 }
 
+std::ifstream openTempFile(const std::string& filename) {
+    std::ifstream tempFile(filename, std::ios::binary);
+    if (!tempFile) {
+        perror("(Handler) Error opening temporary file");
+        exit(EXIT_FAILURE);
+    }
+    return tempFile;
+}
+
 // Create an auction for the user in the database
 std::string createAuction(std::string uid, std::string name,
                                            std::string startValue, std::string timeActive,
-                                           std::string fileName, std::string fileSize,
-                                           std::string fileData)
+                                           std::string fileName, std::string fileSize)
 {
     std::string aid = findNextAuctionID();
     //TODO: Implement datetime logic
@@ -152,7 +160,10 @@ std::string createAuction(std::string uid, std::string name,
     fs::create_directories(AUCTION_PATH + aid);
     // Create asset file
     std::ofstream asset(AUCTION_PATH + aid + ASSET + fileName);
-    asset << fileData;
+    // Load from the temp file
+    std::ifstream tempFile = openTempFile("temp");
+    asset << tempFile.rdbuf();
+    tempFile.close();
 
     // Create start file
     std::ofstream start(AUCTION_PATH + aid + START + aid + ".txt");

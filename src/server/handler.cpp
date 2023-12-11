@@ -50,7 +50,6 @@ void diparseBuffer(char *buffer, Tokens *tokens)
 
 Command handleRequest(char *buffer)
 {
-
     Tokens tokens = parseBuffer(buffer);
     auto it = command_map.find(tokens[0]);
 
@@ -197,7 +196,7 @@ Command myauctions(Tokens *token)
 
 Command openAuction(Tokens *token)
 {
-
+    
     // Create new token for response
     Tokens response;
 
@@ -208,7 +207,6 @@ Command openAuction(Tokens *token)
     std::string timeActive = (*token)[5];
     std::string fileName = (*token)[6];
     std::string fileSize = (*token)[7];
-    std::string fileData = (*token)[8];
 
     if (!isLogin(uid))
     {
@@ -218,7 +216,7 @@ Command openAuction(Tokens *token)
         return Command::COMAND_COMPLETED;
     }
 
-    std::string aid = createAuction(uid, name, startValue, timeActive, fileName, fileSize, fileData);
+    std::string aid = createAuction(uid, name, startValue, timeActive, fileName, fileSize);
     if (aid == "") //TODO: implement fs error logic
     {
         response.push_back("ROA");

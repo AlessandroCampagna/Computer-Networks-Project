@@ -24,10 +24,6 @@
 #define GROUP_NUMBER 17
 #define BACKLOG 5
 #define TIME_OUT 5
-
-struct Connection
-{
-    int socket;
-};
+#define TMP_FILE "temp"
 
 #endif
