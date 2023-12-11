@@ -174,7 +174,6 @@ void *handleTCP(char *ASportStr)
         // Fork a new process to handle the request
         printf("(TCP)  Forking a new process for incoming request\n");
         pid_t pid = fork();
-        close(childSoket); // Close the child socket for parent
 
         if (pid == -1)
         {
@@ -203,10 +202,11 @@ void *handleTCP(char *ASportStr)
             // Print received message
             printf("(TCP) Received: %s", buffer);
 
-            // Check if the request is to send a file process it
+            // Check if the request is to send a file
             if (strncmp(buffer, "OPA", 3) == 0)
             {
-                // Store metadata (Everything untill last space)
+                printf("(TCP) Receiving file\n");
+                // Store metadata
                 char metadata[TCP_BUFFER_SIZE];
 
                 // Clear buffer and copy data
@@ -221,9 +221,9 @@ void *handleTCP(char *ASportStr)
                     exit(EXIT_FAILURE);
                 }
 
-                // Write the data into the file
-                n = n - strlen(metadata);
-                tempFile.write(buffer + strlen(metadata), n);
+                // Write the data into the file (Everything after the last " ")
+                char *data = strrchr(buffer, ' ') + 1;
+                tempFile.write(data, n - (data - buffer));
                 while ((n = recv(childSoket, buffer, TCP_BUFFER_SIZE, 0)) > 0)
                 {
                     tempFile.write(buffer, n);
@@ -261,7 +261,9 @@ void *handleTCP(char *ASportStr)
             exit(EXIT_SUCCESS);
         }
 
+        close(childSoket); // Close the child socket for parent
     }
+
     close(parentSocket);
     freeaddrinfo(res);
     return NULL;
