@@ -18,6 +18,4 @@
 #define BACKLOG 5
 #define TIME_OUT 5
 
-#define TMP_FILE "temp"
-
 #endif

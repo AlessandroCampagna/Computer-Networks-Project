@@ -161,7 +161,7 @@ std::string createAuction(std::string uid, std::string name,
     // Create asset file
     std::ofstream asset(AUCTION_PATH + aid + ASSET + fileName);
     // Load from the temp file
-    std::ifstream tempFile = openTempFile("temp");
+    std::ifstream tempFile = openTempFile(TEMP_PATH);
     asset << tempFile.rdbuf();
     tempFile.close();
 

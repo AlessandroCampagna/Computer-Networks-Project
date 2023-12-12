@@ -107,7 +107,7 @@ void handleTCPchild(int childSocket)
         memset(metadata, 0, TCP_BUFFER_SIZE);
         memcpy(metadata, buffer, TCP_BUFFER_SIZE);
         // Create temporary file to read from socket
-        std::ofstream tempFile(TMP_FILE, std::ios::binary);
+        std::ofstream tempFile(TEMP_PATH, std::ios::binary);
         if (!tempFile)
         {
             perror("(TCP) Error creating temporary file");
