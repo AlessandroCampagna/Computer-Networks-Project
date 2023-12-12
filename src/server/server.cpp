@@ -86,25 +86,9 @@ void handleTCPchild(int childSocket)
     FD_ZERO(&read_fds);
     FD_SET(childSocket, &read_fds);
 
-    // Set timeout to 5 seconds
+    // Set timeout for data to 5 seconds
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-
-    // Use select to wait for data to be available.
-    int result = select(childSocket + 1, &read_fds, NULL, NULL, &timeout);
-
-    if (result == -1)
-    {
-        // An error occurred with select
-        perror("(TCP) Error with select function");
-        exit(EXIT_FAILURE);
-    }
-    else if (result == 0)
-    {
-        // The timeout was reached without any data being available
-        printf("(TCP) Timeout reached without any data\n");
-        return;
-    }
 
     // Clear buffer
     memset(buffer, 0, TCP_BUFFER_SIZE);
@@ -122,11 +106,14 @@ void handleTCPchild(int childSocket)
     if (strncmp(buffer, "OPA", 3) == 0)
     {
         printf("(TCP) Receiving file\n");
+        
         // Store metadata
         char metadata[TCP_BUFFER_SIZE];
+
         // Clear buffer and copy data
         memset(metadata, 0, TCP_BUFFER_SIZE);
         memcpy(metadata, buffer, TCP_BUFFER_SIZE);
+
         // Create temporary file to read from socket
         std::ofstream tempFile(TEMP_PATH, std::ios::binary);
         if (!tempFile)
@@ -134,9 +121,27 @@ void handleTCPchild(int childSocket)
             perror("(TCP) Error creating temporary file");
             exit(EXIT_FAILURE);
         }
+
         // Write the data into the file (Everything after the last " ")
         char *data = strrchr(buffer, ' ') + 1;
         tempFile.write(data, messageSize - (data - buffer));
+
+        // Use select to wait for data to be available
+        int result = select(childSocket + 1, &read_fds, NULL, NULL, &timeout);
+
+        if (result == -1)
+        {
+            // An error occurred with select
+            perror("(TCP) Error with select function");
+            exit(EXIT_FAILURE);
+        }
+        else if (result == 0)
+        {
+            // The timeout was reached without any data being available
+            printf("(TCP) Timeout reached without any data\n");
+            return;
+        }
+
         while ((messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0)) > 0)
         {
             tempFile.write(buffer, messageSize);
