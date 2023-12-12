@@ -94,7 +94,7 @@ void *handleUDP(char *ASportStr)
         }
         
         printf("(UDP) Responding: %s\n", buffer);
-        n = sendto(UDPsocket, buffer, n, 0, (struct sockaddr *)&addr, addrlen);
+        n = sendto(UDPsocket, buffer, strlen(buffer), 0, (struct sockaddr *)&addr, addrlen);
         if (n == -1)
         {
             perror("(UDP) Error sending message");
