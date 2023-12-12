@@ -6,7 +6,7 @@
 #include <fstream>
 
 #define ASDIR_PATH "../../ASDIR/"
-#define TEMP_PATH "../../ASDIR/TEMP/temp"
+#define TEMP_PATH "../../ASDIR/temp"
 #define USER_PATH "../../ASDIR/USERS/"
 #define AUCTION_PATH "../../ASDIR/AUCTIONS/"
 #define HOSTED "/HOSTED/"

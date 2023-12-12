@@ -105,8 +105,9 @@ void handleTCPchild(int childSocket)
     // Check if the request is to send a file
     if (strncmp(buffer, "OPA", 3) == 0)
     {
-        printf("(TCP) Receiving file\n");
-        
+        // This TCP has an \n in the beginning because of the way it is sent TODO: Fix this
+        printf("\n(TCP) Receiving file \n");
+
         // Store metadata
         char metadata[TCP_BUFFER_SIZE];
 
