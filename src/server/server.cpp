@@ -1,7 +1,7 @@
 #include "server.hpp"
 
-// TODO: Handle SIG_PIPE and zombie processes
-//       Handle CTRL+C (SIGINT) and CTRL+Z (SIGTSTP) exit with grace
+//TODO: Handle SIG_PIPE and zombie processes 
+//      Handle CTRL+C (SIGINT) and CTRL+Z (SIGTSTP) exit with grace
 
 int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose)
 {
@@ -92,7 +92,7 @@ void *handleUDP(char *ASportStr)
             perror("(UDP) Command not found");
             exit(EXIT_FAILURE);
         }
-
+        
         printf("(UDP) Responding: %s\n", buffer);
         n = sendto(UDPsocket, buffer, strlen(buffer), 0, (struct sockaddr *)&addr, addrlen);
         if (n == -1)
@@ -100,6 +100,7 @@ void *handleUDP(char *ASportStr)
             perror("(UDP) Error sending message");
             exit(EXIT_FAILURE);
         }
+
     }
 
     close(UDPsocket);
@@ -114,7 +115,7 @@ void *handleTCP(char *ASportStr)
 
     int parentSocket;
     socklen_t addrlen;
-
+    
     int n, errcode;
     char buffer[TCP_BUFFER_SIZE];
 
@@ -223,41 +224,22 @@ void *handleTCP(char *ASportStr)
                 // Write the data into the file (Everything after the last " ")
                 char *data = strrchr(buffer, ' ') + 1;
                 tempFile.write(data, n - (data - buffer));
-                while (true)
+                while ((n = recv(childSoket, buffer, TCP_BUFFER_SIZE, 0)) > 0)
                 {
-                    n = recv(childSoket, buffer, TCP_BUFFER_SIZE, 0);
-                    if (n > 0)
-                    {
-                        tempFile.write(buffer, n);
-                        memset(buffer, 0, TCP_BUFFER_SIZE);
-                    }
-                    else if (n == 0)
-                    {
-                        // The client has closed the connection
-                        break;
-                    }
-                    else
-                    {
-                        // An error occurred
-                        if (errno == EAGAIN || errno == EWOULDBLOCK)
-                        {
-                            // The operation would block because no data is available
-                            // Sleep for a short while and then retry the operation
-                            usleep(1000); // Sleep for 1 millisecond
-                            continue;
-                        }
-                        else
-                        {
-                            perror("(TCP) Error receiving file");
-                            exit(EXIT_FAILURE);
-                        }
-                    }
+                    tempFile.write(buffer, n);
+                    memset(buffer, 0 ,TCP_BUFFER_SIZE);
+                }
+
+                if (n < 0) // Check if the loop exited because of an error
+                {
+                    perror("(TCP) Error receiving file");
+                    exit(EXIT_FAILURE);
                 }
 
                 tempFile.close();
 
                 // Restore metadata
-                memcpy(buffer, metadata, TCP_BUFFER_SIZE);
+                memcpy(buffer, metadata, TCP_BUFFER_SIZE);         
             }
 
             // Process the request
@@ -274,7 +256,7 @@ void *handleTCP(char *ASportStr)
                 perror("(TCP) Error sending message");
                 exit(EXIT_FAILURE);
             }
-
+            
             close(childSoket);
             exit(EXIT_SUCCESS);
         }
