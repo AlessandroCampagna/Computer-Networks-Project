@@ -79,11 +79,32 @@ void handleTCPchild(int childSocket)
     int messageSize;
     char buffer[TCP_BUFFER_SIZE];
 
-    // Set timeout for receive operations
+    fd_set read_fds;
     struct timeval timeout;
-    timeout.tv_sec = TIME_OUT; // timeout after 5 seconds
-    timeout.tv_usec = 0;       // not init'ing this can cause strange errors
-    setsockopt(childSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+
+    // Initialize the file descriptor set
+    FD_ZERO(&read_fds);
+    FD_SET(childSocket, &read_fds);
+
+    // Set timeout to 5 seconds
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    // Use select to wait for data to be available.
+    int result = select(childSocket + 1, &read_fds, NULL, NULL, &timeout);
+
+    if (result == -1)
+    {
+        // An error occurred with select
+        perror("(TCP) Error with select function");
+        exit(EXIT_FAILURE);
+    }
+    else if (result == 0)
+    {
+        // The timeout was reached without any data being available
+        printf("(TCP) Timeout reached without any data\n");
+        return;
+    }
 
     // Clear buffer
     memset(buffer, 0, TCP_BUFFER_SIZE);
@@ -91,7 +112,7 @@ void handleTCPchild(int childSocket)
     messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0);
     if (messageSize == -1)
     {
-        perror("(TCP)  Error receiving message");
+        perror("(TCP) Error receiving message");
         exit(EXIT_FAILURE);
     }
 
