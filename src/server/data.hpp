@@ -6,6 +6,7 @@
 #include <fstream>
 
 #define ASDIR_PATH "../../ASDIR/"
+#define TEMP_PATH "../../ASDIR/temp"
 #define USER_PATH "../../ASDIR/USERS/"
 #define AUCTION_PATH "../../ASDIR/AUCTIONS/"
 #define HOSTED "/HOSTED/"
@@ -29,10 +30,11 @@ bool autenticateUser(std::string uid, std::string password);
 bool isAuction(std::string uid, std::string aid);
 bool areUserAuctions(std::string uid);
 std::vector<std::string> getAuctions(std::string uid);
+
 std::string createAuction(std::string uid, std::string name,
                   std::string startValue, std::string timeActive,
-                  std::string fileName, std::string fileSize,
-                  std::string fileData);
+                  std::string fileName, std::string fileSize);
+
 int removeAuction(std::string aid);
 int createBid(std::string uid, std::string aid, std::string value);
 

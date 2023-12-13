@@ -8,13 +8,12 @@
 #include <unordered_map>
 
 #include "data.hpp"
+#include "server.hpp"
 
 enum Command
 {
     COMMAND_NOT_FOUND,
-    COMAND_COMPLETED,
-    COMMAND_RECIEVE_IMAGE,
-    COMMAND_SEND_IMAGE,
+    COMAND_COMPLETED
 };
 
 using Tokens = std::vector<std::string>;
