@@ -1,40 +1,30 @@
 #include "user.hpp"
 
-using Tokens = std::vector<std::string>;
-using CommandFunction = std::function<ConnectionType(Tokens *)>;
-using ResponseFunction = std::function<void(Tokens *)>;
-
-ConnectionType handle_command(char *buffer);
-void handle_response(char *buffer);
-
-Tokens parse_buffer(char *buffer);
-void diparse_buffer(char *buffer, Tokens *tokens);
-
-ConnectionType login(Tokens *);
+void login(Tokens *);
 void login_response(Tokens *);
-ConnectionType logout(Tokens *);
+void logout(Tokens *);
 void logout_response(Tokens *);
-ConnectionType unregister(Tokens *);
+void unregister(Tokens *);
 void unregister_response(Tokens *);
-ConnectionType myauctions(Tokens *);
+void myauctions(Tokens *);
 void myauctions_response(Tokens *);
-ConnectionType mybids(Tokens *);
+void mybids(Tokens *);
 void mybids_response(Tokens *);
-ConnectionType list(Tokens *);
+void list(Tokens *);
 void list_response(Tokens *);
-ConnectionType show_record(Tokens *);
+void show_record(Tokens *);
 void show_record_response(Tokens *);
 
-ConnectionType open(Tokens *);
+void open(Tokens *);
 void open_response(Tokens *);
-ConnectionType close_auction(Tokens *);
+void close_auction(Tokens *);
 void close_response(Tokens *);
-ConnectionType show_asset(Tokens *);
+void show_asset(Tokens *);
 void show_asset_response(Tokens *);
-ConnectionType bid(Tokens *);
+void bid(Tokens *);
 void bid_response(Tokens *);
 
-ConnectionType exituser(Tokens *);
+void exituser(Tokens *);
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
     {"login", login},
@@ -54,9 +44,7 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"sa", show_asset},
     {"bid", bid},
     {"b", bid},
-    {"exit", exituser}};
-
-const std::unordered_map<std::string, ResponseFunction> response_map = {
+    {"exit", exituser},
     {"RLI", login_response},
     {"RLO", logout_response},
     {"RUR", unregister_response},
@@ -72,70 +60,6 @@ const std::unordered_map<std::string, ResponseFunction> response_map = {
 std::string uid;
 std::string password;
 bool logged = false;
-
-ConnectionType handle_command(char *buffer)
-{
-    Tokens tokens = parse_buffer(buffer);
-
-    auto it = command_map.find(tokens[0]);
-
-    // If the command is found, execute the associated function and return its value
-    if (it != command_map.end())
-    {
-        ConnectionType result = it->second(&tokens);
-        diparse_buffer(buffer, &tokens);
-        return result;
-    }
-
-    // If the command is not found, return an error value
-    return ConnectionType::INVALID;
-}
-
-void handle_response(char *buffer)
-{
-    Tokens tokens = parse_buffer(buffer);
-    auto it = response_map.find(tokens[0]);
-
-    // If the command is found, execute the associated function and return its value
-    if (it != response_map.end())
-    {
-        it->second(&tokens);
-    }
-
-    return;
-}
-
-Tokens parse_buffer(char *buffer)
-{
-    buffer[strlen(buffer) - 1] = '\0';
-    // Make the buffer a cpp string
-    std::string str(buffer);
-
-    // Split the string into tokens
-    std::string delimiter = " ";
-    Tokens tokens;
-    std::string token;
-    std::istringstream tokenStream(str);
-
-    while (std::getline(tokenStream, token, delimiter[0]))
-    {
-        tokens.push_back(token);
-    }
-
-    return tokens;
-}
-
-void diparse_buffer(char *buffer, Tokens *tokens)
-{
-    std::string result = "";
-    for (auto word : *tokens)
-    {
-        result += word + " ";
-    }
-    result.pop_back(); // remove the last space
-    result += "\n";
-    std::strcpy(buffer, result.c_str());
-}
 
 bool validator(const std::string &uid, const std::string &password)
 {
@@ -158,19 +82,20 @@ bool validator(const std::string &uid, const std::string &password)
 
 // -------------------- UDP -------------------- //
 
-// Define the functions for each command
-ConnectionType login(Tokens *tokens)
+void login(Tokens *tokens)
 {
     if ((tokens->size() != 3) || (!validator((*tokens)[1], (*tokens)[2])))
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
     else
     {
         (*tokens)[0] = "LIN";
         uid = (*tokens)[1];
         password = (*tokens)[2];
-        return ConnectionType::UDP;
+
+        send_udp(tokens);
     }
 }
 
@@ -195,18 +120,20 @@ void login_response(Tokens *tokens)
     }
 }
 
-ConnectionType logout(Tokens *tokens)
+void logout(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
     else
     {
         (*tokens)[0] = "LOU";
         tokens->push_back(uid);
         tokens->push_back(password);
-        return ConnectionType::UDP;
+
+        send_udp(tokens);
     }
 }
 
@@ -231,18 +158,20 @@ void logout_response(Tokens *tokens)
     }
 }
 
-ConnectionType unregister(Tokens *tokens)
+void unregister(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
     else
     {
         (*tokens)[0] = "UNR";
         tokens->push_back(uid);
         tokens->push_back(password);
-        return ConnectionType::UDP;
+
+        send_udp(tokens);
     }
 }
 
@@ -268,17 +197,19 @@ void unregister_response(Tokens *tokens)
     }
 }
 
-ConnectionType myauctions(Tokens *tokens)
+void myauctions(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
     else
     {
         (*tokens)[0] = "LMA";
         tokens->push_back(uid);
-        return ConnectionType::UDP;
+
+        send_udp(tokens);
     }
 }
 
@@ -308,17 +239,19 @@ void myauctions_response(Tokens *tokens)
     }
 }
 
-ConnectionType mybids(Tokens *tokens)
+void mybids(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
     else
     {
         (*tokens)[0] = "LMB";
         tokens->push_back(uid);
-        return ConnectionType::UDP;
+
+        send_udp(tokens);
     }
 }
 
@@ -348,16 +281,18 @@ void mybids_response(Tokens *tokens)
     }
 }
 
-ConnectionType list(Tokens *tokens)
+void list(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
     else
     {
         (*tokens)[0] = "LST";
-        return ConnectionType::UDP;
+
+        send_udp(tokens);
     }
 }
 
@@ -382,16 +317,18 @@ void list_response(Tokens *tokens)
     }
 }
 
-ConnectionType show_record(Tokens *tokens)
+void show_record(Tokens *tokens)
 {
     if (tokens->size() != 2)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
     else
     {
         (*tokens)[0] = "SRC";
-        return ConnectionType::UDP;
+
+        send_udp(tokens);
     }
 }
 
@@ -430,35 +367,41 @@ void show_record_response(Tokens *tokens)
 
 // -------------------- TCP -------------------- //
 
-ConnectionType open(Tokens *tokens)
+void open(Tokens *tokens)
 {
 
     if (tokens->size() != 5)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
+    else
+    {
 
-    std::string fileName = (*tokens)[2];
-    tokens->erase(tokens->begin() + 2);
+        std::string fileName = (*tokens)[2];
+        tokens->erase(tokens->begin() + 2);
 
-    if (!std::filesystem::exists(ASSETS_PATH + fileName))
-        return ConnectionType::INVALID;
-    std::uintmax_t fileSize = std::filesystem::file_size(ASSETS_PATH + fileName);
+        if (!std::filesystem::exists(ASSETS_PATH + fileName))
+            printf("Invalid Command\n");
+        return;
+        std::uintmax_t fileSize = std::filesystem::file_size(ASSETS_PATH + fileName);
 
-    std::ifstream file(ASSETS_PATH + fileName, std::ios::binary);
-    if (!file)
-        return ConnectionType::INVALID;
-    std::string fileData((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    file.close();
+        std::ifstream file(ASSETS_PATH + fileName, std::ios::binary);
+        if (!file)
+            printf("Invalid Command\n");
+        return;
+        std::string fileData((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        file.close();
 
-    (*tokens)[0] = "OPA";
-    tokens->insert(tokens->begin() + 1, uid);
-    tokens->insert(tokens->begin() + 2, password);
-    tokens->push_back(fileName);
-    tokens->push_back(std::to_string(fileSize));
-    tokens->push_back(fileData);
+        (*tokens)[0] = "OPA";
+        tokens->insert(tokens->begin() + 1, uid);
+        tokens->insert(tokens->begin() + 2, password);
+        tokens->push_back(fileName);
+        tokens->push_back(std::to_string(fileSize));
+        tokens->push_back(fileData);
 
-    return ConnectionType::TCP;
+        send_tcp(tokens);
+    }
 }
 
 void open_response(Tokens *tokens)
@@ -485,18 +428,21 @@ void open_response(Tokens *tokens)
     }
 }
 
-ConnectionType close_auction(Tokens *tokens)
+void close_auction(Tokens *tokens)
 {
     if (tokens->size() != 2)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
+    else
+    {
+        (*tokens)[0] = "CLS";
+        tokens->insert(tokens->begin() + 1, uid);
+        tokens->insert(tokens->begin() + 2, password);
 
-    (*tokens)[0] = "CLS";
-    tokens->insert(tokens->begin() + 1, uid);
-    tokens->insert(tokens->begin() + 2, password);
-
-    return ConnectionType::TCP;
+        send_tcp(tokens);
+    }
 }
 
 void close_response(Tokens *tokens)
@@ -529,16 +475,20 @@ void close_response(Tokens *tokens)
     }
 }
 
-ConnectionType show_asset(Tokens *tokens)
+void show_asset(Tokens *tokens)
 {
     if (tokens->size() != 2)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
+    else
+    {
 
-    (*tokens)[0] = "SAS";
+        (*tokens)[0] = "SAS";
 
-    return ConnectionType::TCP;
+        send_tcp(tokens);
+    }
 }
 
 void show_asset_response(Tokens *tokens)
@@ -567,18 +517,22 @@ void show_asset_response(Tokens *tokens)
     }
 }
 
-ConnectionType bid(Tokens *tokens)
+void bid(Tokens *tokens)
 {
     if (tokens->size() != 3)
     {
-        return ConnectionType::INVALID;
+        printf("Invalid Command\n");
+        return;
     }
+    else
+    {
 
-    (*tokens)[0] = "BID";
-    tokens->insert(tokens->begin() + 1, uid);
-    tokens->insert(tokens->begin() + 2, password);
+        (*tokens)[0] = "BID";
+        tokens->insert(tokens->begin() + 1, uid);
+        tokens->insert(tokens->begin() + 2, password);
 
-    return ConnectionType::TCP;
+        send_tcp(tokens);
+    }
 }
 
 void bid_response(Tokens *tokens)
@@ -613,7 +567,7 @@ void bid_response(Tokens *tokens)
 
 // -------------------- EXIT -------------------- //
 
-ConnectionType exituser(Tokens *tokens)
+void exituser(Tokens *tokens)
 {
-    return ConnectionType::EXIT;
+    exit(1);
 }
