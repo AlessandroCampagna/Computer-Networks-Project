@@ -137,22 +137,8 @@ void handleTCPchild(int childSocket)
         }
         tempFile.write(data, messageSize - (data - buffer));
 
-        // Use select to wait for data to be available
-        int result = select(childSocket + 1, &read_fds, NULL, NULL, &timeout);
-
-        if (result == -1)
-        {
-            // An error occurred with select
-            perror("(TCP) Error with select function");
-            exit(EXIT_FAILURE);
-        }
-        else if (result == 0)
-        {
-            // The timeout was reached without any data being available
-            printf("(TCP) Timeout reached without any data\n");
-            return;
-        }
-
+        memset(buffer, 0, TCP_BUFFER_SIZE);
+        printf("(TCP) Entering file data loop\n");
         while ((messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0)) > 0)
         {
             tempFile.write(buffer, messageSize);
@@ -163,6 +149,7 @@ void handleTCPchild(int childSocket)
             perror("(TCP) Error receiving file");
             exit(EXIT_FAILURE);
         }
+        printf("(TCP) Exeting file data loop and closing file\n");
         tempFile.close();
         // Restore metadata
         memcpy(buffer, metadata, TCP_BUFFER_SIZE);
