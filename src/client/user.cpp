@@ -22,6 +22,7 @@ char buffer[BUFFER_SIZE];
 
 int main(int argc, char *argv[])
 {
+    system("clear");
     initializer(argc, argv);
     while (true)
     {
