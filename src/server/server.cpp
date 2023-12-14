@@ -123,8 +123,18 @@ void handleTCPchild(int childSocket)
             exit(EXIT_FAILURE);
         }
 
-        // Write the data into the file (Everything after the last " ")
-        char *data = strrchr(buffer, ' ') + 1;
+        // Write the data into the file (Everything after first 8 tokens in buffer)
+        char *data = buffer;
+        for (int i = 0; i < 8; i++)
+        {
+            data = strchr(data, ' ');
+            if (data == NULL)
+            {
+                perror("(TCP) Error parsing metadata");
+                exit(EXIT_FAILURE);
+            }
+            data++;
+        }
         tempFile.write(data, messageSize - (data - buffer));
 
         // Use select to wait for data to be available
