@@ -21,23 +21,17 @@
 #include <fstream>
 
 #define PORT 58017
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 6010
 
 #define ASSETS_PATH "../../ASSETS/"
 
-extern std::string uid;
-extern std::string password;
-extern bool logged;
+using Tokens = std::vector<std::string>;
+using CommandFunction = std::function<void(Tokens *)>;
 
-enum ConnectionType
-{
-    UDP,
-    TCP,
-    EXIT,
-    INVALID
-};
+extern const std::unordered_map<std::string, CommandFunction> command_map;
 
-ConnectionType handle_command(char *buffer);
-void handle_response(char *buffer);
+void send_udp(Tokens *tokens);
+void send_tcp(Tokens *tokens);
+void send_tcp(Tokens *tokens, std::string filename);
 
 #endif

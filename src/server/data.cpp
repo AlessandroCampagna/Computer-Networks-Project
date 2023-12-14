@@ -172,9 +172,8 @@ std::string createAuction(std::string uid, std::string name,
     tempFile.close();
 
     // Create start file
-    std::ofstream start(AUCTION_PATH + aid + START + aid + ".txt");
-    start << uid + " " + name + " " + fileName + " " + startValue + " " + 
-    timeActive + " " + dateTime + " " + fullTime;
+    std::ofstream start(AUCTION_PATH + fileName);
+    start << fileData;
 
     // Create bids directory
     fs::create_directories(AUCTION_PATH + aid + BIDS);

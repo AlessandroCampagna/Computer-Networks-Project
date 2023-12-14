@@ -1,18 +1,41 @@
 #include "user.hpp"
 
+void initializer(int argc, char *argv[]);
+void handle_buffer(Tokens *tokens);
+Tokens parse_buffer();
+void diparse_buffer(Tokens *tokens);
+
+void send_udp(Tokens *tokens);
+void send_tcp(Tokens *tokens);
+void send_tcp(Tokens *tokens, std::string filename);
+
+char *ASIP = strdup("localhost");
+int ASport = PORT;
+char ASportStr[6]; // TODO check if this is the right size
+
+int fd_udp, fd_tcp, errcode;
+ssize_t n;
+socklen_t addrlen;
+struct addrinfo hints_udp, hints_tcp, *res_udp, *res_tcp;
+struct sockaddr_in addr;
+char buffer[BUFFER_SIZE];
+
 int main(int argc, char *argv[])
 {
-    char *ASIP = NULL;
-    int ASport = -1;
-    char ASportStr[6]; // TODO check if this is the right size
+    initializer(argc, argv);
+    while (true)
+    {
+        fgets(buffer, sizeof(buffer), stdin);
+        Tokens tokens = parse_buffer();
+        handle_buffer(&tokens);
+    }
 
-    int fd_udp, fd_tcp, errcode;
-    ssize_t n;
-    socklen_t addrlen;
-    struct addrinfo hints_udp, hints_tcp, *res_udp, *res_tcp;
-    struct sockaddr_in addr;
-    char buffer[BUFFER_SIZE];
+    free(ASIP);
+    return 0;
+}
 
+void initializer(int argc, char *argv[])
+{
     int opt;
     while ((opt = getopt(argc, argv, "n:p:")) != -1)
     {
@@ -30,11 +53,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Default settings
-    if (ASIP == NULL)
-        ASIP = strdup("localhost"); // default IP
-    if (ASport == -1)
-        ASport = PORT;                // default port
     sprintf(ASportStr, "%d", ASport); // convert port to string
 
     fd_udp = socket(AF_INET, SOCK_DGRAM, 0); // UDP socket
@@ -46,71 +64,150 @@ int main(int argc, char *argv[])
     errcode = getaddrinfo(ASIP, ASportStr, &hints_udp, &res_udp);
     if (errcode != 0) /*error*/
         exit(1);
+}
 
-    while (true)
+void handle_buffer(Tokens *tokens)
+{
+    auto it = command_map.find((*tokens)[0]);
+    if (it != command_map.end())
     {
+        it->second(tokens);
+    }
+    else
+    {
+        printf("Invalid Command\n");
+    }
+}
 
-        fgets(buffer, sizeof(buffer), stdin);
+void send_udp(Tokens *tokens)
+{
+    diparse_buffer(tokens);
 
-        ConnectionType connectionType = handle_command(buffer);
+    n = sendto(fd_udp, buffer, strlen(buffer), 0, res_udp->ai_addr, res_udp->ai_addrlen);
+    if (n == -1) /*error*/
+        exit(1);
 
-        if (connectionType == UDP)
-        {
+    memset(&buffer, 0, sizeof buffer);
+    socklen_t addrlen = sizeof(struct sockaddr_in);
 
-            n = sendto(fd_udp, buffer, strlen(buffer), 0, res_udp->ai_addr, res_udp->ai_addrlen);
-            if (n == -1) /*error*/
-                exit(1);
+    n = recvfrom(fd_udp, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
+    if (n == -1) /*error*/
+        exit(1);
 
-            memset(&buffer, 0, sizeof buffer);
-            addrlen = sizeof(addr);
+    *tokens = parse_buffer();
+    handle_buffer(tokens);
+}
 
-            n = recvfrom(fd_udp, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
-            if (n == -1) /*error*/
-                exit(1);
+void send_tcp(Tokens *tokens)
+{
+    diparse_buffer(tokens);
 
-            printf("%s\n", buffer);
-            handle_response(buffer);
-        }
-        else if (connectionType == TCP)
-        {
+    fd_tcp = socket(AF_INET, SOCK_STREAM, 0); // TCP socket
+    memset(&hints_tcp, 0, sizeof hints_tcp);
+    hints_tcp.ai_family = AF_INET;       // IPv4
+    hints_tcp.ai_socktype = SOCK_STREAM; // TCP socket
 
-            fd_tcp = socket(AF_INET, SOCK_STREAM, 0); // TCP socket
+    errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
+    if (errcode != 0) /*error*/
+        exit(1);
 
-            memset(&hints_tcp, 0, sizeof hints_tcp);
-            hints_tcp.ai_family = AF_INET;       // IPv4
-            hints_tcp.ai_socktype = SOCK_STREAM; // TCP socket
+    n = connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen);
+    if (n == -1) /*error*/
+        exit(1);
 
-            errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
-            if (errcode != 0) /*error*/
-                exit(1);
+    n = write(fd_tcp, buffer, strlen(buffer));
+    if (n == -1) /*error*/
+        exit(1);
 
-            n = connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen);
-            if (n == -1) /*error*/
-                exit(1);
+    memset(&buffer, 0, sizeof(buffer));
 
-            n = write(fd_tcp, buffer, strlen(buffer));
-            if (n == -1) /*error*/
-                exit(1);
+    n = read(fd_tcp, buffer, BUFFER_SIZE);
+    if (n == -1) /*error*/
+        exit(1);
 
-            memset(&buffer, 0, sizeof(buffer));
+    *tokens = parse_buffer();
+    handle_buffer(tokens);
+}
 
-            n = read(fd_tcp, buffer, BUFFER_SIZE);
-            if (n == -1) /*error*/
-                exit(1);
-        }
-        else if (connectionType == EXIT)
-        {
-            if (!logged)
-                exit(1);
-            else
-                printf("You must logout before exiting\n");
-        }
-        else
-        {
-            printf("Invalid Command\n");
-        }
+void send_tcp(Tokens *tokens, std::string filename)
+{
+    diparse_buffer(tokens);
+    buffer[strlen(buffer) - 1] = ' ';
+
+    fd_tcp = socket(AF_INET, SOCK_STREAM, 0); // TCP socket
+    memset(&hints_tcp, 0, sizeof hints_tcp);
+    hints_tcp.ai_family = AF_INET;       // IPv4
+    hints_tcp.ai_socktype = SOCK_STREAM; // TCP socket
+
+    errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
+    if (errcode != 0) /*error*/
+        exit(1);
+
+    n = connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen);
+    if (n == -1) /*error*/
+        exit(1);
+
+    write(fd_tcp, buffer, strlen(buffer));
+
+    // Open the file
+    std::ifstream file(filename, std::ios::binary);
+    if (!file)
+    {
+        printf("Error opening file %s\n", filename.c_str());
+        exit(1);
     }
 
-    free(ASIP);
-    return 0;
+    // Read and send the file in chunks
+    while (!file.eof())
+    {
+        file.read(buffer, BUFFER_SIZE);
+        std::streamsize dataSize = file.gcount();
+
+        // Send the file data via TCP
+        n = write(fd_tcp, buffer, dataSize);
+        if (n == -1) /*error*/
+            exit(1);
+    }
+
+    write(fd_tcp, "\n", 1);
+
+    memset(buffer, 0, sizeof(buffer));
+
+    n = read(fd_tcp, buffer, BUFFER_SIZE);
+    if (n == -1) /*error*/
+        exit(1);
+
+    *tokens = parse_buffer();
+    handle_buffer(tokens);
+}
+
+Tokens parse_buffer()
+{
+    if (strlen(buffer) > 1)
+        buffer[strlen(buffer) - 1] = '\0';
+
+    std::string str(buffer);
+    std::string delimiter = " ";
+    Tokens tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+
+    while (std::getline(tokenStream, token, delimiter[0]))
+    {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
+
+void diparse_buffer(Tokens *tokens)
+{
+    std::string result = "";
+    for (auto word : *tokens)
+    {
+        result += word + " ";
+    }
+    result.pop_back(); // remove the last space
+    result += "\n";
+    std::strcpy(buffer, result.c_str());
 }
