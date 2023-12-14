@@ -79,17 +79,6 @@ void handleTCPchild(int childSocket)
     int messageSize;
     char buffer[TCP_BUFFER_SIZE];
 
-    fd_set read_fds;
-    struct timeval timeout;
-
-    // Initialize the file descriptor set
-    FD_ZERO(&read_fds);
-    FD_SET(childSocket, &read_fds);
-
-    // Set timeout for data to 5 seconds
-    timeout.tv_sec = 5;
-    timeout.tv_usec = 0;
-
     // Clear buffer
     memset(buffer, 0, TCP_BUFFER_SIZE);
 
@@ -110,10 +99,24 @@ void handleTCPchild(int childSocket)
 
         // Store metadata
         char metadata[TCP_BUFFER_SIZE];
+        int fileSize;
 
         // Clear buffer and copy data
         memset(metadata, 0, TCP_BUFFER_SIZE);
         memcpy(metadata, buffer, TCP_BUFFER_SIZE);
+
+        // Get file size from 8 token value
+        char *fileSizeStr = strtok(metadata, " ");
+        for (int i = 0; i < 8; i++)
+        {
+            fileSizeStr = strtok(NULL, " ");
+            if (fileSizeStr == NULL)
+            {
+                perror("(TCP) Error parsing metadata");
+                exit(EXIT_FAILURE);
+            }
+        }
+        fileSize = atoi(fileSizeStr);
 
         // Create temporary file to read from socket
         std::ofstream tempFile(TEMP_PATH, std::ios::binary);
@@ -136,10 +139,22 @@ void handleTCPchild(int childSocket)
             data++;
         }
         tempFile.write(data, messageSize - (data - buffer));
+        fileSize -= messageSize - (data - buffer);
 
         memset(buffer, 0, TCP_BUFFER_SIZE);
         printf("(TCP) Entering file data loop\n");
-        while ((messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0)) > 0)
+        while (fileSize > 0)
+        {
+            messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0);
+            if (messageSize == -1)
+            {
+                perror("(TCP) Error receiving file");
+                exit(EXIT_FAILURE);
+            }
+            tempFile.write(buffer, messageSize);
+            fileSize -= messageSize;
+            memset(buffer, 0, TCP_BUFFER_SIZE);
+        }
         {
             tempFile.write(buffer, messageSize);
             memset(buffer, 0, TCP_BUFFER_SIZE);
