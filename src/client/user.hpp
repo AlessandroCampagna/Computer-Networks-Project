@@ -32,6 +32,6 @@ extern const std::unordered_map<std::string, CommandFunction> command_map;
 
 void send_udp(Tokens *tokens);
 void send_tcp(Tokens *tokens);
-void send_file(Tokens *tokens);
+void send_tcp(Tokens *tokens, std::string filename);
 
 #endif

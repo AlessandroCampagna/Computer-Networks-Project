@@ -382,25 +382,20 @@ void open(Tokens *tokens)
         tokens->erase(tokens->begin() + 2);
 
         if (!std::filesystem::exists(ASSETS_PATH + fileName))
+        {
             printf("Invalid Command\n");
-        return;
-        std::uintmax_t fileSize = std::filesystem::file_size(ASSETS_PATH + fileName);
+            return;
+        }
 
-        std::ifstream file(ASSETS_PATH + fileName, std::ios::binary);
-        if (!file)
-            printf("Invalid Command\n");
-        return;
-        std::string fileData((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        file.close();
+        std::uintmax_t fileSize = std::filesystem::file_size(ASSETS_PATH + fileName);
 
         (*tokens)[0] = "OPA";
         tokens->insert(tokens->begin() + 1, uid);
         tokens->insert(tokens->begin() + 2, password);
         tokens->push_back(fileName);
         tokens->push_back(std::to_string(fileSize));
-        tokens->push_back(fileData);
 
-        send_tcp(tokens);
+        send_tcp(tokens, ASSETS_PATH + fileName);
     }
 }
 

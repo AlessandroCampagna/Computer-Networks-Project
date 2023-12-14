@@ -7,7 +7,7 @@ void diparse_buffer(Tokens *tokens);
 
 void send_udp(Tokens *tokens);
 void send_tcp(Tokens *tokens);
-void send_file(Tokens *tokens);
+void send_tcp(Tokens *tokens, std::string filename);
 
 char *ASIP = strdup("localhost");
 int ASport = PORT;
@@ -25,7 +25,6 @@ int main(int argc, char *argv[])
     initializer(argc, argv);
     while (true)
     {
-        memset(&hints_tcp, 0, sizeof hints_tcp);
         fgets(buffer, sizeof(buffer), stdin);
         Tokens tokens = parse_buffer();
         handle_buffer(&tokens);
@@ -91,7 +90,7 @@ void send_udp(Tokens *tokens)
     memset(&buffer, 0, sizeof buffer);
     socklen_t addrlen = sizeof(struct sockaddr_in);
 
-    n = recvfrom(fd_udp, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&res_udp, &addrlen);
+    n = recvfrom(fd_udp, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
     if (n == -1) /*error*/
         exit(1);
 
@@ -132,13 +131,62 @@ void send_tcp(Tokens *tokens)
 
 void send_tcp(Tokens *tokens, std::string filename)
 {
+    diparse_buffer(tokens);
+    buffer[strlen(buffer) - 1] = ' ';
+
+    fd_tcp = socket(AF_INET, SOCK_STREAM, 0); // TCP socket
+    memset(&hints_tcp, 0, sizeof hints_tcp);
+    hints_tcp.ai_family = AF_INET;       // IPv4
+    hints_tcp.ai_socktype = SOCK_STREAM; // TCP socket
+
+    errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
+    if (errcode != 0) /*error*/
+        exit(1);
+
+    n = connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen);
+    if (n == -1) /*error*/
+        exit(1);
+
+    write(fd_tcp, buffer, strlen(buffer));
+
+    // Open the file
+    std::ifstream file(filename, std::ios::binary);
+    if (!file)
+    {
+        printf("Error opening file %s\n", filename.c_str());
+        exit(1);
+    }
+
+    // Read and send the file in chunks
+    while (!file.eof())
+    {
+        file.read(buffer, BUFFER_SIZE);
+        std::streamsize dataSize = file.gcount();
+
+        // Send the file data via TCP
+        n = write(fd_tcp, buffer, dataSize);
+        if (n == -1) /*error*/
+            exit(1);
+    }
+
+    write(fd_tcp, "\n", 1);
+
+    memset(buffer, 0, sizeof(buffer));
+
+    n = read(fd_tcp, buffer, BUFFER_SIZE);
+    if (n == -1) /*error*/
+        exit(1);
+
+    *tokens = parse_buffer();
+    handle_buffer(tokens);
 }
 
 Tokens parse_buffer()
 {
-    buffer[strlen(buffer) - 1] = '\0';
-    std::string str(buffer);
+    if (strlen(buffer) > 1)
+        buffer[strlen(buffer) - 1] = '\0';
 
+    std::string str(buffer);
     std::string delimiter = " ";
     Tokens tokens;
     std::string token;
