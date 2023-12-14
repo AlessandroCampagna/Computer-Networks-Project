@@ -14,7 +14,7 @@
 #define ASSET "/ASSET/"
 #define BIDS "/BIDS/"
 #define END "/END_"
-#define START "START_"
+#define START "/START_"
 
 // User functions
 bool isUser(std::string uid);
