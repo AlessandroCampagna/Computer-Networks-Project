@@ -127,7 +127,7 @@ std::string findNextAuctionID()
 {
     // Check if the directory exists
     if (!fs::exists(AUCTION_PATH)) {
-        return "000";
+        return "001";
     }
 
     // Count number of existing auctions
@@ -163,7 +163,8 @@ std::string createAuction(std::string uid, std::string name,
 
     // Create auctions directory in auctions directory
     fs::create_directories(AUCTION_PATH + aid);
-    // Create asset file
+    // Create asset file and asset folder
+    fs::create_directories(AUCTION_PATH + aid + ASSET);
     std::ofstream asset(AUCTION_PATH + aid + ASSET + fileName);
     // Load from the temp file
     std::ifstream tempFile = openTempFile(TEMP_PATH);
