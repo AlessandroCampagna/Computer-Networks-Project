@@ -125,6 +125,11 @@ std::vector<std::string> getAuctions(std::string uid)
 
 std::string findNextAuctionID()
 {
+    // Check if the directory exists
+    if (!fs::exists(AUCTION_PATH)) {
+        return "001";
+    }
+
     // Count number of existing auctions
     int count = 0;
     for (const auto &entry : fs::directory_iterator(AUCTION_PATH))
@@ -137,11 +142,19 @@ std::string findNextAuctionID()
     return std::to_string(count / 100 % 10) + std::to_string(count / 10 % 10) + std::to_string(count % 10);
 }
 
+std::ifstream openTempFile(const std::string& filename) {
+    std::ifstream tempFile(filename, std::ios::binary);
+    if (!tempFile) {
+        perror("(Handler) Error opening temporary file");
+        exit(EXIT_FAILURE);
+    }
+    return tempFile;
+}
+
 // Create an auction for the user in the database
 std::string createAuction(std::string uid, std::string name,
                                            std::string startValue, std::string timeActive,
-                                           std::string fileName, std::string fileSize,
-                                           std::string fileData)
+                                           std::string fileName, std::string fileSize)
 {
     std::string aid = findNextAuctionID();
     //TODO: Implement datetime logic
@@ -150,9 +163,13 @@ std::string createAuction(std::string uid, std::string name,
 
     // Create auctions directory in auctions directory
     fs::create_directories(AUCTION_PATH + aid);
-    // Create asset file
+    // Create asset file and asset folder
+    fs::create_directories(AUCTION_PATH + aid + ASSET);
     std::ofstream asset(AUCTION_PATH + aid + ASSET + fileName);
-    asset << fileData;
+    // Load from the temp file
+    std::ifstream tempFile = openTempFile(TEMP_PATH);
+    asset << tempFile.rdbuf();
+    tempFile.close();
 
     // Create start file
     std::ofstream start(AUCTION_PATH + aid + START + aid + ".txt");

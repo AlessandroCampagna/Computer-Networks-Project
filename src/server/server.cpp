@@ -1,7 +1,7 @@
 #include "server.hpp"
 
-//TODO: Handle SIG_PIPE and zombie processes 
-//      Handle CTRL+C (SIGINT) and CTRL+Z (SIGTSTP) exit with grace
+// TODO: Handle SIG_PIPE and zombie processes
+//       Handle CTRL+C (SIGINT) and CTRL+Z (SIGTSTP) exit with grace
 
 int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose)
 {
@@ -25,48 +25,16 @@ int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose)
     return 0;
 }
 
-void *handle_UDP(char *ASportStr)
+void handleUDP(char *ASportStr)
 {
 
-    Connection UDPconnection;
-    struct addrinfo hints, *res;
-    struct sockaddr_in addr;
-    socklen_t addrlen;
-    int n, errcode;
-
+    int messageSize;
     char buffer[UDP_BUFFER_SIZE];
 
-    // Create UDP socket
-    UDPconnection.socket = socket(AF_INET, SOCK_DGRAM, 0); // UDP socket
-    if (UDPconnection.socket == -1)
-    {
-        perror("(UDP) Error creating UDP socket");
-        exit(EXIT_FAILURE);
-    }
+    int UDPsocket = openUDP(ASportStr);
+    struct sockaddr_in addr;
+    socklen_t addrlen;
 
-    // Define address structure for UDP
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET;      // IPv4
-    hints.ai_socktype = SOCK_DGRAM; // UDP socket
-    hints.ai_flags = AI_PASSIVE;
-
-    // Get UDP address info
-    errcode = getaddrinfo(NULL, ASportStr, &hints, &res);
-    if (errcode == -1)
-    {
-        perror("(UDP) Error getting UDP address info");
-        exit(EXIT_FAILURE);
-    }
-
-    // Bind UDP socket
-    n = bind(UDPconnection.socket, res->ai_addr, res->ai_addrlen);
-    if (n == -1)
-    {
-        perror("(UDP) Error binding UDP socket");
-        exit(EXIT_FAILURE);
-    }
-
-    // Place the UDP related code here
     while (true)
     {
         // Clear buffer
@@ -74,8 +42,8 @@ void *handle_UDP(char *ASportStr)
 
         // Receive message
         addrlen = sizeof(addr);
-        n = recvfrom(UDPconnection.socket, buffer, UDP_BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
-        if (n == -1)
+        messageSize = recvfrom(UDPsocket, buffer, UDP_BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
+        if (messageSize == -1)
         {
             perror("(UDP) Error receiving message");
             exit(EXIT_FAILURE);
@@ -92,141 +60,183 @@ void *handle_UDP(char *ASportStr)
             perror("(UDP) Command not found");
             exit(EXIT_FAILURE);
         }
-        
+
         printf("(UDP) Responding: %s\n", buffer);
-        n = sendto(UDPconnection.socket, buffer, n, 0, (struct sockaddr *)&addr, addrlen);
-        if (n == -1)
+        messageSize = sendto(UDPsocket, buffer, strlen(buffer), 0, (struct sockaddr *)&addr, addrlen);
+        if (messageSize == -1)
         {
             perror("(UDP) Error sending message");
             exit(EXIT_FAILURE);
         }
-
     }
 
-    close(UDPconnection.socket);
-    freeaddrinfo(res);
-    return NULL;
+    close(UDPsocket);
 }
 
-void *handle_TCP(char *ASportStr)
+void handleTCPchild(int childSocket)
 {
 
-    Connection TCPconnection;
-
-    struct addrinfo hints, *res;
-    struct sockaddr_in addr;
-    socklen_t addrlen;
-    int n, errcode;
-
+    int messageSize;
     char buffer[TCP_BUFFER_SIZE];
 
-    // Create TCP socket
-    TCPconnection.socket = socket(AF_INET, SOCK_STREAM, 0); // TCP socket
-    if (TCPconnection.socket == -1)
+    // Clear buffer
+    memset(buffer, 0, TCP_BUFFER_SIZE);
+
+    messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0);
+    if (messageSize == -1)
     {
-        perror("(TCP) Error creating TCP socket");
+        perror("(TCP) Error receiving message");
         exit(EXIT_FAILURE);
     }
 
-    // Define address structure for TCP
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET;       // IPv4
-    hints.ai_socktype = SOCK_STREAM; // TCP socket
-    hints.ai_flags = AI_PASSIVE;
-
-    // Get TCP address info
-    errcode = getaddrinfo(NULL, ASportStr, &hints, &res);
-    if (errcode == -1)
+    // Print received message
+    printf("(TCP) Received: %s", buffer);
+    // Check if the request is to send a file
+    if (strncmp(buffer, "OPA", 3) == 0)
     {
-        perror("(TCP) Error getting TCP address info");
+        // This TCP has an \n in the beginning because of the way it is sent TODO: Fix this
+        printf("\n(TCP) Receiving file \n");
+
+        // Store metadata
+        char metadata[TCP_BUFFER_SIZE];
+        int fileSize;
+
+        // Clear buffer and copy data
+        memset(metadata, 0, TCP_BUFFER_SIZE);
+        memcpy(metadata, buffer, TCP_BUFFER_SIZE);
+
+        // Parse metadata into tokens (using c++)
+        // Make the buffer a cpp string
+        std::string str(metadata);
+
+        // Split the string into tokens
+        std::string delimiter = " ";
+        Tokens tokens;
+        std::string token;
+        std::istringstream tokenStream(str);
+
+        while (std::getline(tokenStream, token, delimiter[0]))
+        {
+            tokens.push_back(token);
+        }
+
+        // Get file size
+        fileSize = atoi(tokens[7].c_str());
+
+        // Create temporary file to read from socket
+        std::ofstream tempFile(TEMP_PATH, std::ios::binary);
+        if (!tempFile)
+        {
+            perror("(TCP) Error creating temporary file");
+            exit(EXIT_FAILURE);
+        }
+
+        // Write the data into the file (Everything after first 8 tokens in buffer)
+        char *data = buffer;
+        for (int i = 0; i < 8; i++)
+        {
+            data = strchr(data, ' ');
+            if (data == NULL)
+            {
+                perror("(TCP) Error parsing metadata to find file data");
+                exit(EXIT_FAILURE);
+            }
+            data++;
+        }
+        tempFile.write(data, messageSize - (data - buffer));
+        fileSize -= messageSize - (data - buffer);
+
+        memset(buffer, 0, TCP_BUFFER_SIZE);
+        printf("(TCP) Entering file data loop\n");
+        while (fileSize > 0)
+        {
+            messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0);
+            if (messageSize == -1)
+            {
+                perror("(TCP) Error receiving file");
+                exit(EXIT_FAILURE);
+            }
+            tempFile.write(buffer, messageSize);
+            fileSize -= messageSize;
+            memset(buffer, 0, TCP_BUFFER_SIZE);
+        }
+        {
+            tempFile.write(buffer, messageSize);
+            memset(buffer, 0, TCP_BUFFER_SIZE);
+        }
+        if (messageSize < 0) // Check if the loop exited because of an error
+        {
+            perror("(TCP) Error receiving file");
+            exit(EXIT_FAILURE);
+        }
+        printf("(TCP) Exeting file data loop and closing file\n");
+        tempFile.close();
+        // Restore metadata
+        memcpy(buffer, metadata, TCP_BUFFER_SIZE);
+    }
+    // Process the request
+    Command status = handleRequest(buffer);
+    if (status == Command::COMMAND_NOT_FOUND)
+    {
+        perror("(TCP) Command not found");
+        exit(EXIT_FAILURE);
+    }
+    printf("(TCP) Sending: %s\n", buffer);
+    messageSize = send(childSocket, buffer, messageSize, 0);
+    if (messageSize == -1)
+    {
+        perror("(TCP) Error sending message");
         exit(EXIT_FAILURE);
     }
 
-    // Bind TCP socket
-    n = bind(TCPconnection.socket, res->ai_addr, res->ai_addrlen);
-    if (n == -1)
-    {
-        perror("(TCP) Error binding TCP socket");
-        exit(EXIT_FAILURE);
-    }
+    close(childSocket);
+    exit(EXIT_SUCCESS);
+}
+
+void handleTCP(char *ASportStr)
+{
+
+    int parentSocket = openTCP(ASportStr);
+    struct sockaddr_in addr;
+    socklen_t addrlen;
 
     while (true)
     {
-        // Clear buffer
-        memset(buffer, 0, TCP_BUFFER_SIZE);
-
         // Listen for connections
-        if (listen(TCPconnection.socket, BACKLOG) == -1)
+        if (listen(parentSocket, BACKLOG) == -1)
         {
             perror("(TCP)  Error listening on socket");
             exit(EXIT_FAILURE);
         }
 
-        // Accept a connection
+        // Accept a connection and create a socket for it
         addrlen = sizeof(addr);
-        int new_socket = accept(TCPconnection.socket, (struct sockaddr *)&addr, &addrlen);
-        if (new_socket == -1)
+        int childSoket = accept(parentSocket, (struct sockaddr *)&addr, &addrlen);
+        if (childSoket == -1)
         {
             perror("(TCP)  Error accepting connection");
             exit(EXIT_FAILURE);
         }
 
-        // Fork a new process for each connection
+        // Fork a new process to handle the request
         printf("(TCP)  Forking a new process for incoming request\n");
         pid_t pid = fork();
+
         if (pid == -1)
         {
             perror("(TCP) Error creating a new process");
             exit(EXIT_FAILURE);
         }
-        else if (pid == 0) // Child process
+        else if (pid == 0) // Child process to handle request
         {
-            // Set timeout for receive operations
-            struct timeval timeout;
-            timeout.tv_sec = TIME_OUT; // timeout after 5 seconds
-            timeout.tv_usec = 0;       // not init'ing this can cause strange errors
-            setsockopt(new_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
-
-            // Receive message
-            addrlen = sizeof(addr);
-            n = recv(new_socket, buffer, TCP_BUFFER_SIZE, 0);
-            if (n == -1)
-            {
-                perror("(TCP)  Error receiving message");
-                exit(EXIT_FAILURE);
-            }
-
-            // Print received message
-            printf("(TCP) Received: %s", buffer);
-
-            // Process request
-            Command status = handleRequest(buffer);
-            if (status == Command::COMMAND_NOT_FOUND)
-            {
-                perror("(TCP) Command not found");
-                exit(EXIT_FAILURE);
-            } else if (status == Command::COMMAND_SEND_IMAGE)
-            {
-                printf("(TCP) Sending Image\n");
-                //TODO: Send image
-            }
-
-            printf("(TCP) Sending: %s\n", buffer);
-            n = send(new_socket, buffer, n, 0);
-            if (n == -1)
-            {
-                perror("(TCP) Error sending message");
-                exit(EXIT_FAILURE);
-            }
-            
-            close(new_socket);
-            exit(EXIT_SUCCESS);
+            close(parentSocket);
+            handleTCPchild(childSoket);
         }
 
+        close(childSoket);
     }
-    close(TCPconnection.socket);
-    freeaddrinfo(res);
-    return NULL;
+
+    close(parentSocket);
 }
 
 int main(int argc, char *argv[])
@@ -234,14 +244,13 @@ int main(int argc, char *argv[])
     int ASport = -1;
     char ASportStr[5];
     int GN = GROUP_NUMBER;
-
     bool Verbose = false;
 
-    int errcode;
+    int error;
 
     // Parse arguments
-    errcode = parseArgs(argc, argv, &ASport, &GN, &Verbose);
-    if (errcode == -1)
+    error = parseArgs(argc, argv, &ASport, &GN, &Verbose);
+    if (error == -1)
     {
         perror("(SERVER) Error parsing arguments");
         exit(EXIT_FAILURE);
@@ -267,7 +276,7 @@ int main(int argc, char *argv[])
     else if (udp == 0)
     {
         // Child process for UDP
-        handle_UDP(ASportStr);
+        handleUDP(ASportStr);
         exit(EXIT_SUCCESS);
     }
 
@@ -280,7 +289,7 @@ int main(int argc, char *argv[])
     else if (tcp == 0)
     {
         // Child process for TCP
-        handle_TCP(ASportStr);
+        handleTCP(ASportStr);
         exit(EXIT_SUCCESS);
     }
 
