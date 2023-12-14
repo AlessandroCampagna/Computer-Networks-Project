@@ -112,7 +112,7 @@ void handleTCPchild(int childSocket)
             fileSizeStr = strtok(NULL, " ");
             if (fileSizeStr == NULL)
             {
-                perror("(TCP) Error parsing metadata");
+                perror("(TCP) Error parsing metadata to find file size");
                 exit(EXIT_FAILURE);
             }
         }
@@ -133,7 +133,7 @@ void handleTCPchild(int childSocket)
             data = strchr(data, ' ');
             if (data == NULL)
             {
-                perror("(TCP) Error parsing metadata");
+                perror("(TCP) Error parsing metadata to find file data");
                 exit(EXIT_FAILURE);
             }
             data++;
