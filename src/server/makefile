@@ -10,7 +10,7 @@ clean:
 run:
 	$(CC) $(CFLAGS) -o $(OUTDIR)/server.o $(FILES)
 	clear
-	./server.o
+	./server.o -v
 
 test:
 	$(CC) $(CFLAGS) -o server.o $(FILES)

@@ -1,9 +1,37 @@
 #include "server.hpp"
 
-// TODO: Handle SIG_PIPE and zombie processes
-//       Handle CTRL+C (SIGINT) and CTRL+Z (SIGTSTP) exit with grace
+int UDPsocket;
+int TCPsocket;
+int TCPchildSocket;
 
-int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose)
+bool verbose = false;
+
+void closeSockets()
+{
+    printf("(SERVER) Closing sockets\n");
+    if (UDPsocket != -1) close(UDPsocket);
+    if (TCPsocket != -1) close(TCPsocket);
+    if (TCPchildSocket != -1) close(TCPchildSocket);
+}
+
+void signalHandler(int signum) {
+    if (signum == SIGPIPE) {
+        // Handle broken pipe signal
+        std::cout << "(SERVER) Received SIGPIPE, ignoring it" << std::endl;
+    } else if (signum == SIGINT) {
+        // Handle interrupt signal (CTRL+C)
+        std::cout << "(SERVER) Received SIGINT, exiting" << std::endl;
+        closeSockets();
+        exit(EXIT_SUCCESS);
+    } else if (signum == SIGTSTP) {
+        // Handle stop signal (CTRL+Z)
+        std::cout << "(SERVER) Received SIGTSTP, exiting" << std::endl;
+        closeSockets();
+        exit(EXIT_SUCCESS);
+    }
+}
+
+int parseArgs(int argc, char *argv[], int *ASport, int *GN)
 {
     int opt;
     while ((opt = getopt(argc, argv, "p:v")) != -1)
@@ -14,7 +42,7 @@ int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose)
             *ASport = atoi(optarg);
             break;
         case 'v':
-            *Verbose = true;
+            verbose = true;           
             break;
         default:
             fprintf(stderr, "Usage: %s [-p ASport] [-v]\n", argv[0]);
@@ -25,15 +53,16 @@ int parseArgs(int argc, char *argv[], int *ASport, int *GN, bool *Verbose)
     return 0;
 }
 
-void handleUDP(char *ASportStr)
+void manageUDPConnections(char *ASportStr)
 {
 
     int messageSize;
     char buffer[UDP_BUFFER_SIZE];
 
-    int UDPsocket = openUDP(ASportStr);
     struct sockaddr_in addr;
     socklen_t addrlen;
+
+    UDPsocket = openUDP(ASportStr);
 
     while (true)
     {
@@ -73,7 +102,7 @@ void handleUDP(char *ASportStr)
     close(UDPsocket);
 }
 
-void handleTCPchild(int childSocket)
+void manageTCPChild(int childSocket)
 {
 
     int messageSize;
@@ -195,17 +224,18 @@ void handleTCPchild(int childSocket)
     exit(EXIT_SUCCESS);
 }
 
-void handleTCP(char *ASportStr)
+void manageTCPConnections(char *ASportStr)
 {
 
-    int parentSocket = openTCP(ASportStr);
     struct sockaddr_in addr;
     socklen_t addrlen;
+
+    TCPsocket = openTCP(ASportStr);
 
     while (true)
     {
         // Listen for connections
-        if (listen(parentSocket, BACKLOG) == -1)
+        if (listen(TCPsocket, BACKLOG) == -1)
         {
             perror("(TCP) Error listening on socket");
             exit(EXIT_FAILURE);
@@ -213,8 +243,8 @@ void handleTCP(char *ASportStr)
 
         // Accept a connection and create a socket for it
         addrlen = sizeof(addr);
-        int childSoket = accept(parentSocket, (struct sockaddr *)&addr, &addrlen);
-        if (childSoket == -1)
+        int TCPchildSocket = accept(TCPsocket, (struct sockaddr *)&addr, &addrlen);
+        if (TCPchildSocket == -1)
         {
             perror("(TCP) Error accepting connection");
             exit(EXIT_FAILURE);
@@ -231,14 +261,14 @@ void handleTCP(char *ASportStr)
         }
         else if (pid == 0) // Child process to handle request
         {
-            close(parentSocket);
-            handleTCPchild(childSoket);
+            close(TCPsocket);
+            manageTCPChild(TCPchildSocket);
         }
 
-        close(childSoket);
+        close(TCPchildSocket);
     }
 
-    close(parentSocket);
+    close(TCPsocket);
 }
 
 int main(int argc, char *argv[])
@@ -246,12 +276,11 @@ int main(int argc, char *argv[])
     int ASport = -1;
     char ASportStr[5];
     int GN = GROUP_NUMBER;
-    bool Verbose = false;
 
     int error;
 
     // Parse arguments
-    error = parseArgs(argc, argv, &ASport, &GN, &Verbose);
+    error = parseArgs(argc, argv, &ASport, &GN);
     if (error == -1)
     {
         perror("(SERVER) Error parsing arguments");
@@ -263,8 +292,8 @@ int main(int argc, char *argv[])
         ASport = PORT + GN;           // default port
     sprintf(ASportStr, "%d", ASport); // convert port to string
 
-    if (Verbose)
-        printf("(SERVER) ASport = %s\n", ASportStr);
+    // If verbose mode is not active, redirect standard output to null device
+    if (!verbose) freopen("/dev/null", "w", stdout);
 
     // Create child processes for UDP and TCP
     pid_t udp, tcp;
@@ -278,7 +307,7 @@ int main(int argc, char *argv[])
     else if (udp == 0)
     {
         // Child process for UDP
-        handleUDP(ASportStr);
+        manageUDPConnections(ASportStr);
         exit(EXIT_SUCCESS);
     }
 
@@ -291,7 +320,7 @@ int main(int argc, char *argv[])
     else if (tcp == 0)
     {
         // Child process for TCP
-        handleTCP(ASportStr);
+        manageTCPConnections(ASportStr);
         exit(EXIT_SUCCESS);
     }
 
@@ -299,6 +328,6 @@ int main(int argc, char *argv[])
     int status;
     waitpid(udp, &status, 0);
     waitpid(tcp, &status, 0);
-
+    printf("(SERVER) Exiting\n");
     return EXIT_SUCCESS;
 }
