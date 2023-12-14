@@ -12,6 +12,7 @@ void mybids(Tokens *);
 void mybids_response(Tokens *);
 void list(Tokens *);
 void list_response(Tokens *);
+void clear(Tokens *);
 void show_record(Tokens *);
 void show_record_response(Tokens *);
 
@@ -36,6 +37,7 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"mb", mybids},
     {"list", list},
     {"l", list},
+    {"clear", clear},
     {"show_record", show_record},
     {"sr", show_record},
     {"open", open},
@@ -565,4 +567,9 @@ void bid_response(Tokens *tokens)
 void exituser(Tokens *tokens)
 {
     exit(1);
+}
+
+void clear(Tokens *tokens)
+{
+    system("clear");
 }
