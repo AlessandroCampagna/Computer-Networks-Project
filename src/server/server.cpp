@@ -171,7 +171,9 @@ void handleTCPchild(int childSocket)
         }
         printf("(TCP) Exeting file data loop and closing file\n");
         tempFile.close();
-        // Restore metadata
+
+        // Restore metadata without file data
+        memset(buffer, 0, TCP_BUFFER_SIZE);
         memcpy(buffer, metadata, TCP_BUFFER_SIZE);
     }
     // Process the request
@@ -205,7 +207,7 @@ void handleTCP(char *ASportStr)
         // Listen for connections
         if (listen(parentSocket, BACKLOG) == -1)
         {
-            perror("(TCP)  Error listening on socket");
+            perror("(TCP) Error listening on socket");
             exit(EXIT_FAILURE);
         }
 
@@ -214,12 +216,12 @@ void handleTCP(char *ASportStr)
         int childSoket = accept(parentSocket, (struct sockaddr *)&addr, &addrlen);
         if (childSoket == -1)
         {
-            perror("(TCP)  Error accepting connection");
+            perror("(TCP) Error accepting connection");
             exit(EXIT_FAILURE);
         }
 
         // Fork a new process to handle the request
-        printf("(TCP)  Forking a new process for incoming request\n");
+        printf("(TCP) Forking a new process for incoming request\n");
         pid_t pid = fork();
 
         if (pid == -1)
