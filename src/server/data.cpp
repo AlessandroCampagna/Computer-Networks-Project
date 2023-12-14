@@ -156,6 +156,9 @@ std::string createAuction(std::string uid, std::string name,
     std::string dateTime = "dateTime";
     std::string fullTime = "fullTime";
 
+    // Create auction folder if it doesn't exist
+    fs::create_directories(AUCTION_PATH);
+
     // Create auctions directory in auctions directory
     fs::create_directories(AUCTION_PATH + aid);
     // Create asset file
