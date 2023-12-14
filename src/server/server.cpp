@@ -79,17 +79,6 @@ void handleTCPchild(int childSocket)
     int messageSize;
     char buffer[TCP_BUFFER_SIZE];
 
-    fd_set read_fds;
-    struct timeval timeout;
-
-    // Initialize the file descriptor set
-    FD_ZERO(&read_fds);
-    FD_SET(childSocket, &read_fds);
-
-    // Set timeout for data to 5 seconds
-    timeout.tv_sec = 5;
-    timeout.tv_usec = 0;
-
     // Clear buffer
     memset(buffer, 0, TCP_BUFFER_SIZE);
 
@@ -110,10 +99,29 @@ void handleTCPchild(int childSocket)
 
         // Store metadata
         char metadata[TCP_BUFFER_SIZE];
+        int fileSize;
 
         // Clear buffer and copy data
         memset(metadata, 0, TCP_BUFFER_SIZE);
         memcpy(metadata, buffer, TCP_BUFFER_SIZE);
+
+        // Parse metadata into tokens (using c++)
+        // Make the buffer a cpp string
+        std::string str(metadata);
+
+        // Split the string into tokens
+        std::string delimiter = " ";
+        Tokens tokens;
+        std::string token;
+        std::istringstream tokenStream(str);
+
+        while (std::getline(tokenStream, token, delimiter[0]))
+        {
+            tokens.push_back(token);
+        }
+
+        // Get file size
+        fileSize = atoi(tokens[7].c_str());
 
         // Create temporary file to read from socket
         std::ofstream tempFile(TEMP_PATH, std::ios::binary);
@@ -123,27 +131,35 @@ void handleTCPchild(int childSocket)
             exit(EXIT_FAILURE);
         }
 
-        // Write the data into the file (Everything after the last " ")
-        char *data = strrchr(buffer, ' ') + 1;
+        // Write the data into the file (Everything after first 8 tokens in buffer)
+        char *data = buffer;
+        for (int i = 0; i < 8; i++)
+        {
+            data = strchr(data, ' ');
+            if (data == NULL)
+            {
+                perror("(TCP) Error parsing metadata to find file data");
+                exit(EXIT_FAILURE);
+            }
+            data++;
+        }
         tempFile.write(data, messageSize - (data - buffer));
+        fileSize -= messageSize - (data - buffer);
 
-        // Use select to wait for data to be available
-        int result = select(childSocket + 1, &read_fds, NULL, NULL, &timeout);
-
-        if (result == -1)
+        memset(buffer, 0, TCP_BUFFER_SIZE);
+        printf("(TCP) Entering file data loop\n");
+        while (fileSize > 0)
         {
-            // An error occurred with select
-            perror("(TCP) Error with select function");
-            exit(EXIT_FAILURE);
+            messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0);
+            if (messageSize == -1)
+            {
+                perror("(TCP) Error receiving file");
+                exit(EXIT_FAILURE);
+            }
+            tempFile.write(buffer, messageSize);
+            fileSize -= messageSize;
+            memset(buffer, 0, TCP_BUFFER_SIZE);
         }
-        else if (result == 0)
-        {
-            // The timeout was reached without any data being available
-            printf("(TCP) Timeout reached without any data\n");
-            return;
-        }
-
-        while ((messageSize = recv(childSocket, buffer, TCP_BUFFER_SIZE, 0)) > 0)
         {
             tempFile.write(buffer, messageSize);
             memset(buffer, 0, TCP_BUFFER_SIZE);
@@ -153,6 +169,7 @@ void handleTCPchild(int childSocket)
             perror("(TCP) Error receiving file");
             exit(EXIT_FAILURE);
         }
+        printf("(TCP) Exeting file data loop and closing file\n");
         tempFile.close();
         // Restore metadata
         memcpy(buffer, metadata, TCP_BUFFER_SIZE);
