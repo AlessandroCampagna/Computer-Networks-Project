@@ -125,6 +125,11 @@ std::vector<std::string> getAuctions(std::string uid)
 
 std::string findNextAuctionID()
 {
+    // Check if the directory exists
+    if (!fs::exists(AUCTION_PATH)) {
+        return "000";
+    }
+
     // Count number of existing auctions
     int count = 0;
     for (const auto &entry : fs::directory_iterator(AUCTION_PATH))
@@ -155,9 +160,6 @@ std::string createAuction(std::string uid, std::string name,
     //TODO: Implement datetime logic
     std::string dateTime = "dateTime";
     std::string fullTime = "fullTime";
-
-    // Create auction folder if it doesn't exist
-    fs::create_directories(AUCTION_PATH);
 
     // Create auctions directory in auctions directory
     fs::create_directories(AUCTION_PATH + aid);
