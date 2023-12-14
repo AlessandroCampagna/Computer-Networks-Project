@@ -105,18 +105,23 @@ void handleTCPchild(int childSocket)
         memset(metadata, 0, TCP_BUFFER_SIZE);
         memcpy(metadata, buffer, TCP_BUFFER_SIZE);
 
-        // Get file size from 8 token value
-        char *fileSizeStr = strtok(metadata, " ");
-        for (int i = 0; i < 8; i++)
+        // Parse metadata into tokens (using c++)
+        // Make the buffer a cpp string
+        std::string str(metadata);
+
+        // Split the string into tokens
+        std::string delimiter = " ";
+        Tokens tokens;
+        std::string token;
+        std::istringstream tokenStream(str);
+
+        while (std::getline(tokenStream, token, delimiter[0]))
         {
-            fileSizeStr = strtok(NULL, " ");
-            if (fileSizeStr == NULL)
-            {
-                perror("(TCP) Error parsing metadata to find file size");
-                exit(EXIT_FAILURE);
-            }
+            tokens.push_back(token);
         }
-        fileSize = atoi(fileSizeStr);
+
+        // Get file size
+        fileSize = atoi(tokens[7].c_str());
 
         // Create temporary file to read from socket
         std::ofstream tempFile(TEMP_PATH, std::ios::binary);
