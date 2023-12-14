@@ -125,11 +125,6 @@ std::vector<std::string> getAuctions(std::string uid)
 
 std::string findNextAuctionID()
 {
-    // Check if the directory exists
-    if (!fs::exists(AUCTION_PATH)) {
-        return "001";
-    }
-
     // Count number of existing auctions
     int count = 0;
     for (const auto &entry : fs::directory_iterator(AUCTION_PATH))
@@ -163,8 +158,7 @@ std::string createAuction(std::string uid, std::string name,
 
     // Create auctions directory in auctions directory
     fs::create_directories(AUCTION_PATH + aid);
-    // Create asset file and asset folder
-    fs::create_directories(AUCTION_PATH + aid + ASSET);
+    // Create asset file
     std::ofstream asset(AUCTION_PATH + aid + ASSET + fileName);
     // Load from the temp file
     std::ifstream tempFile = openTempFile(TEMP_PATH);
