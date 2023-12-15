@@ -1,21 +1,13 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "handler.hpp"
-#include "sockets.hpp"
+#include <signal.h>
+#include <string>
 
-#include <unistd.h>
-#include <stdlib.h>
+#include "connection.hpp"
 
-#include <cstdio>
-#include <cstring>   
-
-#define TCP_BUFFER_SIZE 6010
-#define UDP_BUFFER_SIZE 128
-
+#define GROUP 17
 #define PORT 58000
-#define GROUP_NUMBER 17
-#define BACKLOG 5
-#define TIME_OUT 5
+#define PORT_SIZE 6
 
 #endif
