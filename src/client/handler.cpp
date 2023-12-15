@@ -1,31 +1,4 @@
-#include "user.hpp"
-
-void login(Tokens *);
-void login_response(Tokens *);
-void logout(Tokens *);
-void logout_response(Tokens *);
-void unregister(Tokens *);
-void unregister_response(Tokens *);
-void myauctions(Tokens *);
-void myauctions_response(Tokens *);
-void mybids(Tokens *);
-void mybids_response(Tokens *);
-void list(Tokens *);
-void list_response(Tokens *);
-void clear(Tokens *);
-void show_record(Tokens *);
-void show_record_response(Tokens *);
-
-void open(Tokens *);
-void open_response(Tokens *);
-void close_auction(Tokens *);
-void close_response(Tokens *);
-void show_asset(Tokens *);
-void show_asset_response(Tokens *);
-void bid(Tokens *);
-void bid_response(Tokens *);
-
-void exituser(Tokens *);
+#include "handler.hpp"
 
 const std::unordered_map<std::string, CommandFunction> command_map = {
     {"login", login},
@@ -63,6 +36,51 @@ std::string uid;
 std::string password;
 bool logged = false;
 
+void handle_buffer()
+{
+    Tokens tokens = parse_buffer();
+    auto it = command_map.find(tokens[0]);
+    if (it != command_map.end())
+    {
+        it->second(&tokens);
+    }
+    else
+    {
+        printf("Invalid Command\n");
+    }
+}
+
+Tokens parse_buffer()
+{
+    if (strlen(buffer) > 1)
+        buffer[strlen(buffer) - 1] = '\0';
+
+    std::string str(buffer);
+    std::string delimiter = " ";
+    Tokens tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+
+    while (std::getline(tokenStream, token, delimiter[0]))
+    {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
+
+void diparse_buffer(Tokens *tokens)
+{
+    std::string result = "";
+    for (auto word : *tokens)
+    {
+        result += word + " ";
+    }
+    result.pop_back(); // remove the last space
+    result += "\n";
+    std::strcpy(buffer, result.c_str());
+}
+
 bool validator(const std::string &uid, const std::string &password)
 {
     // Check if uid is up to 6 digits and numeric
@@ -97,7 +115,9 @@ void login(Tokens *tokens)
         uid = (*tokens)[1];
         password = (*tokens)[2];
 
-        send_udp(tokens);
+        diparse_buffer(tokens);
+        send_udp();
+        handle_buffer();
     }
 }
 
@@ -135,7 +155,9 @@ void logout(Tokens *tokens)
         tokens->push_back(uid);
         tokens->push_back(password);
 
-        send_udp(tokens);
+        diparse_buffer(tokens);
+        send_udp();
+        handle_buffer();
     }
 }
 
@@ -173,7 +195,9 @@ void unregister(Tokens *tokens)
         tokens->push_back(uid);
         tokens->push_back(password);
 
-        send_udp(tokens);
+        diparse_buffer(tokens);
+        send_udp();
+        handle_buffer();
     }
 }
 
@@ -211,7 +235,9 @@ void myauctions(Tokens *tokens)
         (*tokens)[0] = "LMA";
         tokens->push_back(uid);
 
-        send_udp(tokens);
+        diparse_buffer(tokens);
+        send_udp();
+        handle_buffer();
     }
 }
 
@@ -253,7 +279,9 @@ void mybids(Tokens *tokens)
         (*tokens)[0] = "LMB";
         tokens->push_back(uid);
 
-        send_udp(tokens);
+        diparse_buffer(tokens);
+        send_udp();
+        handle_buffer();
     }
 }
 
@@ -294,7 +322,9 @@ void list(Tokens *tokens)
     {
         (*tokens)[0] = "LST";
 
-        send_udp(tokens);
+        diparse_buffer(tokens);
+        send_udp();
+        handle_buffer();
     }
 }
 
@@ -330,7 +360,9 @@ void show_record(Tokens *tokens)
     {
         (*tokens)[0] = "SRC";
 
-        send_udp(tokens);
+        diparse_buffer(tokens);
+        send_udp();
+        handle_buffer();
     }
 }
 
@@ -397,7 +429,9 @@ void open(Tokens *tokens)
         tokens->push_back(fileName);
         tokens->push_back(std::to_string(fileSize));
 
-        send_tcp(tokens, ASSETS_PATH + fileName);
+        diparse_buffer(tokens);
+        send_tcp(ASSETS_PATH + fileName);
+        handle_buffer();
     }
 }
 
@@ -438,7 +472,9 @@ void close_auction(Tokens *tokens)
         tokens->insert(tokens->begin() + 1, uid);
         tokens->insert(tokens->begin() + 2, password);
 
-        send_tcp(tokens);
+        diparse_buffer(tokens);
+        send_tcp();
+        handle_buffer();
     }
 }
 
@@ -484,7 +520,9 @@ void show_asset(Tokens *tokens)
 
         (*tokens)[0] = "SAS";
 
-        send_tcp(tokens);
+        diparse_buffer(tokens);
+        send_tcp();
+        handle_buffer();
     }
 }
 
@@ -528,7 +566,9 @@ void bid(Tokens *tokens)
         tokens->insert(tokens->begin() + 1, uid);
         tokens->insert(tokens->begin() + 2, password);
 
-        send_tcp(tokens);
+        diparse_buffer(tokens);
+        send_tcp();
+        handle_buffer();
     }
 }
 
