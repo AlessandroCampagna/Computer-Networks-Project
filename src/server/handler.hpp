@@ -8,7 +8,6 @@
 #include <unordered_map>
 
 #include "data.hpp"
-#include "server.hpp"
 
 enum Command
 {
