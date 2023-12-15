@@ -4,16 +4,7 @@
 #include "sockets.hpp"
 #include "handler.hpp"
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
-
 #include <iostream>
-#include <cstdio>
-#include <cstring>
-
-#include "handler.hpp"
-#include "sockets.hpp"
 
 #define TCP_BUFFER_SIZE 512
 #define UDP_BUFFER_SIZE 6010

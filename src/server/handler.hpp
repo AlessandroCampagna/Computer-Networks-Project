@@ -1,11 +1,8 @@
 #ifndef HANDLER_H
 #define HANDLER_H
 
-#include <stdlib.h>
-
 #include <cstring>
 #include <functional>
-#include <unordered_map>
 
 #include "data.hpp"
 
