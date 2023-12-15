@@ -4,7 +4,7 @@ int UDPsocket;
 int TCPsocket;
 int TCPchildSocket;
 
-static void TCPChild(int childSocket);
+static void TCPChild(int childSocket, struct sockaddr_in addr);
 static void TCPFile(int childSocket, char *buffer, int messageSize);
 
 void closeSockets()
@@ -40,7 +40,7 @@ void UDPConnection(char *port)
         }
 
         // Print received message
-        printf("(UDP) Received: %s", buffer);
+        printf("(UDP) From %s:%d received %s", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), buffer);
 
         // Process request
         Command status = handleRequest(buffer);
@@ -51,7 +51,9 @@ void UDPConnection(char *port)
             exit(EXIT_FAILURE);
         }
 
-        printf("(UDP) Responding: %s\n", buffer);
+        // Print message to send
+        printf("(UDP) Sending to %s:%d message %s", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), buffer);
+
         messageSize = sendto(UDPsocket, buffer, strlen(buffer), 0, (struct sockaddr *)&addr, addrlen);
         if (messageSize == -1)
         {
@@ -101,7 +103,7 @@ void TCPConnection(char *port)
         else if (pid == 0) // Child process to handle request
         {
             close(TCPsocket);
-            TCPChild(TCPchildSocket);
+            TCPChild(TCPchildSocket, addr);
         }
 
         close(TCPchildSocket);
@@ -110,7 +112,7 @@ void TCPConnection(char *port)
     close(TCPsocket);
 }
 
-void TCPChild(int childSocket)
+void TCPChild(int childSocket, struct sockaddr_in addr)
 {
     int messageSize;
     char buffer[TCP_BUFFER_SIZE];
@@ -126,7 +128,7 @@ void TCPChild(int childSocket)
     }
 
     // Print received message
-    printf("(TCP) Received: %s", buffer);
+    printf("(TCP) Sending to %s:%d message %s", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), buffer);
 
     // Handle file transfer
     if (strncmp(buffer, "OPA", 3) == 0)
@@ -141,7 +143,9 @@ void TCPChild(int childSocket)
         perror("(TCP) Command not found");
         exit(EXIT_FAILURE);
     }
-    printf("(TCP) Sending: %s\n", buffer);
+
+    printf("(TCP) Sending to %s:%d message %s", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), buffer);
+
     messageSize = send(childSocket, buffer, messageSize, 0);
     if (messageSize == -1)
     {
@@ -229,7 +233,7 @@ void TCPFile(int childSocket, char *buffer, int messageSize)
         perror("(TCP) Error receiving file");
         exit(EXIT_FAILURE);
     }
-    printf("(TCP) Exeting file data loop and closing file\n");
+    printf("(TCP) Exiting file data loop and closing file\n");
     tempFile.close();
 
     // Restore metadata without file data
