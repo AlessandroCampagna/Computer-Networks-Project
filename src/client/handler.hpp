@@ -1,5 +1,5 @@
-#ifdef HANDLER_H
-#define HANDLER_H
+#ifndef HANDLER_HPP
+#define HANDLER_HPP
 
 #include <stdio.h>
 #include <cstdio>

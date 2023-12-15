@@ -246,7 +246,7 @@ void myauctions_response(Tokens *tokens)
 
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 1)
         {
             std::string aid = *it;
             std::string state = *(it + 1);
@@ -290,7 +290,7 @@ void mybids_response(Tokens *tokens)
 
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 1)
         {
             std::string aid = *it;
             std::string state = *(it + 1);
@@ -332,7 +332,7 @@ void list_response(Tokens *tokens)
 {
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 1)
         {
             std::string aid = *it;
             std::string state = *(it + 1);

@@ -1,5 +1,7 @@
-#ifndef USER_H
-#define USER_H
+#ifndef USER_HPP
+#define USER_HPP
+
+#include <cstdio>
 
 #include "handler.hpp"
 #include "connection.hpp"
