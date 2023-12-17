@@ -198,6 +198,67 @@ int removeAuction(std::string aid)
     return 0;
 }
 
+bool isAuction(std::string aid)
+{
+    if (fs::exists(AUCTION_PATH + aid))
+        return true;
+    return false;
+}
+
+std::string getAuctionHostUid(std::string aid)
+{
+    std::string host;
+
+    host = "host";
+
+    return host;
+}
+
+std::string getAuctionName(std::string aid)
+{
+    std::string name;
+
+    name = "name";
+
+    return name;   
+}
+
+std::string getAuctionAssetFilename(std::string aid)
+{
+    std::string fileName;
+
+    fileName = "fileName";
+
+    return fileName;
+}
+
+std::string getAuctionStartValue(std::string aid)
+{
+    std::string startValue;
+
+     startValue = "startValue"; 
+
+    return startValue;
+}
+
+std::string getAuctionTimeActive(std::string aid)
+{
+    std::string timeActive;
+
+    timeActive = "timeActive";  
+
+    return timeActive;
+}
+
+std::string getAuctionDateTime(std::string aid)
+{
+    std::string dateTime;
+
+    dateTime = "dateTime"; 
+
+    return dateTime;
+}
+
 bool isAuctionOpen(std::string aid)
 {
     if (fs::exists(AUCTION_PATH + aid + END + aid + ".txt"))

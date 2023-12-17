@@ -22,6 +22,7 @@ Command unregister(Tokens *);
 Command myAuctions(Tokens *);
 Command myBids(Tokens *);
 Command listAuctions(Tokens *);
+Command showRecords(Tokens *);
 // TCP commands
 Command openAuction(Tokens *);
 Command closeAuction(Tokens *);
