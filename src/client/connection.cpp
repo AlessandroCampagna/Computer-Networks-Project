@@ -164,3 +164,9 @@ void send_tcp(std::string filename)
 
     close(fd_tcp);
 }
+
+void close_socket()
+{
+    close(fd_tcp);
+    close(fd_udp);
+}

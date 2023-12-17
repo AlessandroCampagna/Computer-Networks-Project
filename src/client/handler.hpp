@@ -12,6 +12,7 @@
 #include <regex>
 #include <filesystem>
 #include <fstream>
+#include <csignal>
 
 #include "connection.hpp"
 
@@ -23,6 +24,7 @@ using CommandFunction = std::function<void(Tokens *)>;
 void handle_buffer();
 Tokens parse_buffer();
 void diparse_buffer(Tokens *);
+void signalHandler(int);
 
 void login(Tokens *);
 void login_response(Tokens *);

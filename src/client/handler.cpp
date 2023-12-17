@@ -41,9 +41,9 @@ void handle_buffer()
     Tokens tokens = parse_buffer();
     auto it = command_map.find(tokens[0]);
     if (it != command_map.end())
-    {   
-        if ((logged) || (tokens[0] == "login") || (tokens[0] == "RLI"))
-        it->second(&tokens);
+    {
+        if ((logged) || (tokens[0] == "login") || (tokens[0] == "RLI") || (tokens[0] == "exit"))
+            it->second(&tokens);
         else
         {
             printf("User not logged in\n");
@@ -103,6 +103,23 @@ bool validator(const std::string &uid, const std::string &password)
     }
 
     return true;
+}
+
+void signalHandler(int signum)
+{
+    if (signum == SIGPIPE)
+    {
+        // Handle broken pipe signal
+        printf("Received SIGPIPE, ignoring it\n");
+    }
+    else if ((signum == SIGINT) or (signum == SIGTSTP))
+    {
+        // Handle interrupt signal (CTRL+C)
+
+        printf("\nExiting..\n");
+        strcpy(buffer, "exit\n");
+        handle_buffer();
+    }
 }
 
 // -------------------- UDP -------------------- //
@@ -610,7 +627,12 @@ void bid_response(Tokens *tokens)
 
 void exituser(Tokens *tokens)
 {
-    exit(1);
+    if (logged){
+        strcpy(buffer, "logout\n");
+        handle_buffer();
+    }
+    close_socket();
+    exit(0);
 }
 
 void clear(Tokens *tokens)
