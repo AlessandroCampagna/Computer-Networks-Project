@@ -9,6 +9,7 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"UNR", unregister},
     {"LMA", myAuctions},
     {"LMB", myBids},
+    {"LST", listAuctions},
     // TCP commands
     {"OPA", openAuction},
     {"CLS", closeAuction},
@@ -236,6 +237,37 @@ Command myBids(Tokens *token)
                 response.push_back("0");
             }
         }
+    }
+
+    *token = response;
+    return Command::COMAND_COMPLETED;
+}
+
+Command listAuctions(Tokens *token)
+{
+    // Create new token for response
+    Tokens response;
+
+    for (auto auction : getAllAuctions())
+    {
+        response.push_back(auction);
+        if (isAuctionOpen(auction))
+        {
+            response.push_back("1");
+        }
+        else
+        {
+            response.push_back("0");
+        }
+    }
+
+    response.insert(response.begin(), "RLS");
+    
+    if (response.size() == 1)
+    {
+        response.push_back("NOK");
+    } else {
+        response.insert(response.begin() + 1, "OK");
     }
 
     *token = response;

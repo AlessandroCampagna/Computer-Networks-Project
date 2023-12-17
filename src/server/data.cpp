@@ -123,6 +123,18 @@ std::vector<std::string> getAuctions(std::string uid)
     return auctions;
 }
 
+std::vector<std::string> getAllAuctions()
+{
+    std::vector<std::string> auctions;
+    for (const auto &entry : fs::directory_iterator(AUCTION_PATH))
+    {
+        std::string auction = entry.path();
+        auction = auction.substr(auction.find_last_of("/") + 1);
+        auctions.push_back(auction);
+    }
+    return auctions;
+}
+
 std::string findNextAuctionID()
 {
     // Check if the directory exists

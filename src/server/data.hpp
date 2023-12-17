@@ -31,6 +31,7 @@ bool isAuction(std::string uid, std::string aid);
 bool areUserAuctions(std::string uid);
 
 std::vector<std::string> getAuctions(std::string uid);
+std::vector<std::string> getAllAuctions();
 std::string createAuction(std::string uid, std::string name,
                           std::string startValue, std::string timeActive,
                           std::string fileName, std::string fileSize);
