@@ -19,12 +19,13 @@ using CommandFunction = std::function<Command(Tokens *)>;
 Command login(Tokens *);
 Command logout(Tokens *);
 Command unregister(Tokens *);
-Command myauctions(Tokens *);
+Command myAuctions(Tokens *);
 // TCP commands
 Command openAuction(Tokens *);
 Command closeAuction(Tokens *);
 Command sendAsset(Tokens *);
 Command placeBid(Tokens *);
+Command myBids(Tokens *);
 
 Command handleRequest(char *buffer);
 

@@ -25,8 +25,8 @@ int createUser(std::string uid, std::string password)
     file << password;
     file.close();
 
-    fs::create_directories(USER_PATH + uid + "/HOSTED");
-    fs::create_directories(USER_PATH + uid + "/BID");
+    fs::create_directories(USER_PATH + uid + HOSTED);
+    fs::create_directories(USER_PATH + uid + BIDDED);
 
     return 0;
 }
@@ -208,6 +208,19 @@ int createBid(std::string uid, std::string aid, std::string value)
     std::ofstream auctionBid(AUCTION_PATH + aid + BIDS + value + ".txt");
     
     return 0;
+}
+
+std::vector<std::string> getAuctionsBided(std::string uid)
+{
+    std::vector<std::string> auctions;
+    for (const auto &entry : fs::directory_iterator(USER_PATH + uid + BIDDED))
+    {
+        std::string auction = entry.path();
+        auction = auction.substr(auction.find_last_of("/") + 1);
+        auction = auction.substr(0, auction.find_last_of("."));
+        auctions.push_back(auction);
+    }
+    return auctions;
 }
 
 // Load an asset from the database into the temporary file

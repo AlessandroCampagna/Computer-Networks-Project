@@ -7,13 +7,13 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"LIN", login},
     {"LOU", logout},
     {"UNR", unregister},
-    {"LMA", myauctions},
+    {"LMA", myAuctions},
+    {"LMB", myBids},
     // TCP commands
     {"OPA", openAuction},
     {"CLS", closeAuction},
     {"SAS", sendAsset},
-    {"BID", placeBid},
-    {"RSA", sendAsset}};
+    {"BID", placeBid}};
 
 Tokens parseBuffer(char *buffer)
 {
@@ -164,7 +164,7 @@ Command unregister(Tokens *token)
     return Command::COMAND_COMPLETED;
 }
 
-Command myauctions(Tokens *token)
+Command myAuctions(Tokens *token)
 {
     // Create new token for response
     Tokens response;
@@ -188,6 +188,39 @@ Command myauctions(Tokens *token)
         for (auto auction : getAuctions(uid))
         {
             response.push_back(auction);
+            response.push_back("1"); //TODO: Check if auction is active
+        }
+    }
+
+    *token = response;
+    return Command::COMAND_COMPLETED;
+}
+
+Command myBids(Tokens *token)
+{
+    // Create new token for response
+    Tokens response;
+
+    std::string uid = (*token)[1];
+
+    if (!isLogin(uid))
+    {
+        response.push_back("RMB");
+        response.push_back("NLG");
+    }
+    else if (!areUserAuctions(uid))
+    {
+        response.push_back("RMB");
+        response.push_back("NOK");
+    }
+    else
+    {
+        response.push_back("RMB");
+        response.push_back("OK");
+        for (auto auction : getAuctionsBided(uid))
+        {
+            response.push_back(auction);
+            response.push_back("1"); //TODO: Check if auction is active
         }
     }
 
@@ -291,6 +324,15 @@ Command placeBid(Tokens *token)
     std::string aid = (*token)[3]; 
     std::string value = (*token)[4];
 
+    // Check if user is logged in
+    if (!isLogin(uid))
+    {
+        response.push_back("RBD");
+        response.push_back("NLG");
+        *token = response;
+        return Command::COMAND_COMPLETED;
+    }
+
     int error = createBid(uid, aid, value);
     if (error == -1){ //TODO: Implemnet errors
         response.push_back("RBD");
@@ -300,7 +342,7 @@ Command placeBid(Tokens *token)
     }
 
     response.push_back("RBD");
-    response.push_back("OK");
+    response.push_back("ACC");
     *token = response;
     return Command::COMAND_COMPLETED;
 }
