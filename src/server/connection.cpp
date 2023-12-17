@@ -267,56 +267,53 @@ void TCPSendFile(int childSocket, char *buffer)
 
     // Remove \n from the end of the buffer
     buffer[strlen(buffer) - 1] = ' ';
-    printf("(TCP) Buffer: -%s-\n", buffer);
 
-    // Send the metadata to the client
-    if (send(childSocket, buffer, TCP_BUFFER_SIZE, 0) < 0)
+    ssize_t n;
+    
+    n = write(childSocket, buffer, strlen(buffer));
+    if (n == -1)
     {
-        perror("Error sending metadata\n");
-        exit(EXIT_FAILURE);
+        perror("Error sending message");
+        memset(&buffer, 0, sizeof buffer);
+        close(childSocket);
+        return;
     }
 
-    // Open the temporary file containing the data
+    // Open the file
     std::ifstream file(TEMP_PATH, std::ios::binary);
-
     if (!file)
     {
-        perror("Error opening temporary file\n");
-        exit(EXIT_FAILURE);
+        printf("Error opening file\n");
+        memset(&buffer, 0, sizeof buffer);
+        close(childSocket);
+        return;
     }
 
-    memset(buffer, 0, TCP_BUFFER_SIZE);
-
-    // Send the file data to the client
+    // Read and send the file in chunks
     while (!file.eof())
     {
         file.read(buffer, TCP_BUFFER_SIZE);
-        std::streamsize bytesRead = file.gcount();
+        std::streamsize dataSize = file.gcount();
 
-        // Check if the read operation was successful
-        if (!file && !file.eof())
+        // Send the file data via TCP
+        n = write(childSocket, buffer, dataSize);
+        if (n == -1)
         {
-            perror("Error reading file\n");
-            file.close();
-            exit(EXIT_FAILURE);
+            perror("Error sending message");
+            memset(&buffer, 0, sizeof buffer);
+            close(childSocket);
+            return;
         }
-
-        if (send(childSocket, buffer, bytesRead, 0) < 0)
-        {
-            perror("Error sending file\n");
-            file.close();
-            exit(EXIT_FAILURE);
-        }
-
-        memset(buffer, 0, TCP_BUFFER_SIZE);
     }
 
-    file.close();
-
-    // Remove the temporary file
-    if (remove(TEMP_PATH) != 0)
+    n= write(childSocket, "\n", 1);
+    if (n == -1)
     {
-        perror("Error deleting temporary file\n");
-        exit(EXIT_FAILURE);
+        perror("Error sending message");
+        memset(&buffer, 0, sizeof buffer);
+        close(childSocket);
+        return;
     }
+
+    memset(buffer, 0, sizeof(buffer));
 }

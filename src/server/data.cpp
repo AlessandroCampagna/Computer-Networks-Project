@@ -113,7 +113,9 @@ std::vector<std::string> getAuctions(std::string uid)
 
 std::vector<std::string> getAllAuctions()
 {
+
     std::vector<std::string> auctions;
+    if (fs::exists(AUCTION_PATH))
     for (const auto &entry : fs::directory_iterator(AUCTION_PATH))
     {
         std::string auction = entry.path();
