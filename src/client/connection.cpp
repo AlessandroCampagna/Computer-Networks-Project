@@ -9,6 +9,7 @@ ssize_t n;
 socklen_t addrlen;
 struct addrinfo hints_udp, hints_tcp, *res_udp, *res_tcp;
 struct sockaddr_in addr;
+struct timeval timeout;
 char buffer[BUFFER_SIZE];
 
 void initializer(int argc, char *argv[])
@@ -43,25 +44,45 @@ void send_udp()
     errcode = getaddrinfo(ASIP, ASportStr, &hints_udp, &res_udp);
     if (errcode != 0)
     {
-        perror("error");
-        exit(1);
+        perror("Error getting address info");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_udp);
+        return;
     }
 
     n = sendto(fd_udp, buffer, strlen(buffer), 0, res_udp->ai_addr, res_udp->ai_addrlen);
     if (n == -1)
     {
-        perror("error");
-        exit(1);
+        perror("Error sending message");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_udp);
+        return;
     }
 
     memset(&buffer, 0, sizeof buffer);
     socklen_t addrlen = sizeof(struct sockaddr_in);
 
+    // Set the timeout to 5 seconds
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    setsockopt(fd_udp, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
     n = recvfrom(fd_udp, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
     if (n == -1)
     {
-        perror("error");
-        exit(1);
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+        {
+            // Timeout occurred
+            printf("Timeout occurred. No response received.\n");
+            memset(&buffer, 0, sizeof buffer);
+        }
+        else
+        {
+            perror("Error receiving message");
+            memset(&buffer, 0, sizeof buffer);
+            
+        }
     }
 
     close(fd_udp);
@@ -77,31 +98,56 @@ void send_tcp()
     errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
     if (errcode != 0)
     {
-        perror("error");
-        exit(1);
+        perror("Error getting address info");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
     }
 
     n = connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen);
     if (n == -1)
     {
-        perror("error");
-        exit(1);
+        perror("Error connecting to server");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
     }
 
     n = write(fd_tcp, buffer, strlen(buffer));
     if (n == -1)
     {
-        perror("error");
-        exit(1);
+        perror("Error sending message");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
     }
 
     memset(&buffer, 0, sizeof(buffer));
 
+    // Set the timeout to 5 seconds
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    setsockopt(fd_tcp, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
     n = read(fd_tcp, buffer, BUFFER_SIZE);
     if (n == -1)
     {
-        perror("error");
-        exit(1);
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+        {
+            // Timeout occurred
+            printf("Timeout occurred. No response received.\n");
+            memset(&buffer, 0, sizeof buffer);
+            close(fd_tcp);
+            return;
+        }
+        else
+        {
+            perror("Error receiving message");
+            memset(&buffer, 0, sizeof buffer);
+            close(fd_tcp);
+            return;
+        }
     }
 
     char *data = buffer;
@@ -120,7 +166,9 @@ void send_tcp()
     if (!tempFile)
     {
         perror("Error creating temporary file");
-        exit(1);
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
     }
 
     tempFile.write(data, n - (data - buffer));
@@ -146,15 +194,19 @@ void send_tcp(std::string filename)
     errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
     if (errcode != 0)
     {
-        perror("error");
-        exit(1);
+        perror("Error getting address info");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
     }
 
     n = connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen);
     if (n == -1)
     {
-        perror("error");
-        exit(1);
+        perror("Error connecting to server");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
     }
 
     write(fd_tcp, buffer, strlen(buffer));
@@ -164,7 +216,9 @@ void send_tcp(std::string filename)
     if (!file)
     {
         printf("Error opening file %s\n", filename.c_str());
-        exit(1);
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
     }
 
     // Read and send the file in chunks
@@ -177,20 +231,48 @@ void send_tcp(std::string filename)
         n = write(fd_tcp, buffer, dataSize);
         if (n == -1)
         {
-            perror("error");
-            exit(1);
+            perror("Error sending message");
+            memset(&buffer, 0, sizeof buffer);
+            close(fd_tcp);
+            return;
         }
     }
 
-    write(fd_tcp, "\n", 1);
+    n= write(fd_tcp, "\n", 1);
+    if (n == -1)
+    {
+        perror("Error sending message");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
+    }
 
     memset(buffer, 0, sizeof(buffer));
+
+    // Set the timeout to 5 seconds
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    setsockopt(fd_tcp, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
 
     n = read(fd_tcp, buffer, BUFFER_SIZE);
     if (n == -1)
     {
-        perror("error");
-        exit(1);
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+        {
+            // Timeout occurred
+            printf("Timeout occurred. No response received.\n");
+            memset(&buffer, 0, sizeof buffer);
+            close(fd_tcp);
+            return;
+        }
+        else
+        {
+            perror("error");
+            memset(&buffer, 0, sizeof buffer);
+            close(fd_tcp);
+            return;
+        }
     }
 
     close(fd_tcp);

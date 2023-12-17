@@ -13,6 +13,9 @@
 #include <string>
 #include <filesystem>
 #include <fstream>
+#include <chrono>
+#include <thread>
+
 
 #define GN 17
 #define PORT 58000 + GN
