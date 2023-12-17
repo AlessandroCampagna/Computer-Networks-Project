@@ -462,15 +462,21 @@ void show_record_response(Tokens *tokens)
     }
     else if ((*tokens)[1] == "OK")
     {
+        if (tokens->size()>2)
         printf("Host UID: %s\n", (*tokens)[2].c_str());
+        if (tokens->size()>3)
         printf("Auction Name: %s\n", (*tokens)[3].c_str());
+        if (tokens->size()>4)
         printf("Asset File Name: %s\n", (*tokens)[4].c_str());
+        if (tokens->size()>5)
         printf("Start Value: %s\n", (*tokens)[5].c_str());
+        if (tokens->size()>7)
         printf("Start Date and Time: %s %s\n", (*tokens)[6].c_str(), (*tokens)[7].c_str());
+        if (tokens->size()>8)
         printf("Auction Duration: %s seconds\n\n", (*tokens)[8].c_str());
 
         int startIndex = 9;
-        while ((tokens->size() > 9) && ((*tokens)[startIndex] == "B"))
+        while ((*tokens)[startIndex] == "B")
         {
             printf("Bidder UID: %s\n", (*tokens)[startIndex + 1].c_str());
             printf("Bid Value: %s\n", (*tokens)[startIndex + 2].c_str());
@@ -484,6 +490,8 @@ void show_record_response(Tokens *tokens)
             printf("Auction Closing Date and Time: %s %s\n", (*tokens)[tokens->size() - 3].c_str(), (*tokens)[tokens->size() - 2].c_str());
             printf("Auction Closing Time Elapsed: %s seconds\n", (*tokens)[tokens->size() - 1].c_str());
         }
+    }else{
+        printf("Unknown response.\n");
     }
 }
 
