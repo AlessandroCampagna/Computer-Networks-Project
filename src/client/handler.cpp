@@ -499,7 +499,6 @@ void show_record_response(Tokens *tokens)
 
 void open(Tokens *tokens)
 {
-
     if (!logged)
     {
         printf("User not logged in.\n");
@@ -512,7 +511,6 @@ void open(Tokens *tokens)
     }
     else
     {
-
         std::string fileName = (*tokens)[2];
         tokens->erase(tokens->begin() + 2);
 
@@ -531,7 +529,13 @@ void open(Tokens *tokens)
         tokens->push_back(std::to_string(fileSize));
 
         diparse_buffer(tokens);
-        send_tcp(ASSETS_PATH + fileName);
+        // Check if fileName ends with ".txt"
+        if (fileName.substr(fileName.length() - 4) == ".txt")
+        {
+            send_txt(ASSETS_PATH + fileName);
+        }else{
+            send_tcp(ASSETS_PATH + fileName);
+        }
         handle_buffer();
     }
 }
