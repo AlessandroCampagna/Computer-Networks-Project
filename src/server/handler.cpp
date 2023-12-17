@@ -12,7 +12,8 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"OPA", openAuction},
     {"CLS", closeAuction},
     {"SAS", sendAsset},
-    {"BID", placeBid}};
+    {"BID", placeBid},
+    {"RSA", sendAsset}};
 
 Tokens parseBuffer(char *buffer)
 {
@@ -257,7 +258,27 @@ Command closeAuction(Tokens *token)
 
 Command sendAsset(Tokens *token)
 {
-    //TODO: Implement TCP file trasnfer
+    Tokens response;
+
+    std::string aid = (*token)[1];
+
+    // Load the asset to the temp file
+    int error = loadAsset(aid);
+    if (error == -1) {
+        response.push_back("RSA");
+        response.push_back("NOK");
+        *token = response;
+        return Command::COMAND_COMPLETED;    
+    }
+
+    std::string assetName = getAssetName(aid);
+    std::string assetSize = getAssetSize(aid);
+
+    response.push_back("RSA");
+    response.push_back("OK");
+    response.push_back(assetName);
+    response.push_back(assetSize);
+    *token = response;
     return Command::COMAND_COMPLETED;
 }
 

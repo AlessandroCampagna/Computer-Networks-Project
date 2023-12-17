@@ -209,3 +209,73 @@ int createBid(std::string uid, std::string aid, std::string value)
     
     return 0;
 }
+
+// Load an asset from the database into the temporary file
+int loadAsset(std::string aid)
+{
+
+    if (!fs::exists(AUCTION_PATH + aid)) {
+        return -1;
+    }   
+
+    // Iterate over the auction folder to find the asset file
+    for (const auto &entry : fs::directory_iterator(AUCTION_PATH + aid + ASSET))
+    {
+        // Open the asset file
+        std::ifstream assetFile(entry.path(), std::ios::binary);
+        if (!assetFile)
+        {
+            perror("(AS) Error opening asset file");
+            exit(EXIT_FAILURE);
+        }
+
+        // Open the temp file
+        std::ofstream tempFile(TEMP_PATH, std::ios::binary);
+        if (!tempFile)
+        {
+            perror("(AS) Error opening temporary file");
+            exit(EXIT_FAILURE);
+        }
+
+        // Copy the asset file to the temp file
+        tempFile << assetFile.rdbuf();
+
+        // Close the files
+        assetFile.close();
+        tempFile.close();
+
+        break;
+    }
+
+    return 0;
+}
+
+std::string getAssetName(std::string aid)
+{
+    std::string assetName;
+
+    // Iterate over the auction folder to find the asset file
+    for (const auto &entry : fs::directory_iterator(AUCTION_PATH + aid + ASSET))
+    {
+        // Cast entry to void
+        (void)entry;
+        assetName = assetName.substr(assetName.find_last_of("/") + 1);
+        break;
+    }
+
+    return assetName;
+}
+
+std::string getAssetSize(std::string aid)
+{
+
+    std::string assetSize;
+
+    for (const auto &entry : fs::directory_iterator(AUCTION_PATH + aid + ASSET))
+    {
+        assetSize = std::to_string(entry.file_size());
+        break;
+    }
+
+    return assetSize;
+}

@@ -17,7 +17,7 @@ The AS server follows a hierarchical structure.
 
 The main function lives inside the server module where the command line arguments are parsed and the TCP and UDP channels are forked.
 
-The sockets module is used as an abstraction for opening the communication sockets inside the handler.
+The sockets module is used as an abstraction for opening the communication sockets inside the connection module where the requests and responses are received and sent.
 
 The handler is responsible for processing all requests made by the clients, utilizing the data module to read and write to the database located inside the "ASDIR" folder.
 
