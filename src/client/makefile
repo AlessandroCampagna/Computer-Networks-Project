@@ -16,3 +16,8 @@ run:
 
 test: 
 	$(CC) $(CFLAGS) -o user.o $(FILES)
+
+tejo:
+	$(CC) $(CFLAGS) -o user.o $(FILES)
+	clear
+	./user.o -n tejo.tecnico.ulisboa.pt -p 58011

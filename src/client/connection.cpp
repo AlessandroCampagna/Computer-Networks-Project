@@ -41,19 +41,28 @@ void send_udp()
     hints_udp.ai_socktype = SOCK_DGRAM; // UDP socket
 
     errcode = getaddrinfo(ASIP, ASportStr, &hints_udp, &res_udp);
-    if (errcode != 0) /*error*/
+    if (errcode != 0)
+    {
+        perror("error");
         exit(1);
+    }
 
     n = sendto(fd_udp, buffer, strlen(buffer), 0, res_udp->ai_addr, res_udp->ai_addrlen);
-    if (n == -1) /*error*/
+    if (n == -1)
+    {
+        perror("error");
         exit(1);
+    }
 
     memset(&buffer, 0, sizeof buffer);
     socklen_t addrlen = sizeof(struct sockaddr_in);
 
     n = recvfrom(fd_udp, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&addr, &addrlen);
-    if (n == -1) /*error*/
+    if (n == -1)
+    {
+        perror("error");
         exit(1);
+    }
 
     close(fd_udp);
 }
@@ -66,22 +75,34 @@ void send_tcp()
     hints_tcp.ai_socktype = SOCK_STREAM; // TCP socket
 
     errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
-    if (errcode != 0) /*error*/
+    if (errcode != 0)
+    {
+        perror("error");
         exit(1);
+    }
 
     n = connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen);
-    if (n == -1) /*error*/
+    if (n == -1)
+    {
+        perror("error");
         exit(1);
+    }
 
     n = write(fd_tcp, buffer, strlen(buffer));
-    if (n == -1) /*error*/
+    if (n == -1)
+    {
+        perror("error");
         exit(1);
+    }
 
     memset(&buffer, 0, sizeof(buffer));
 
     n = read(fd_tcp, buffer, BUFFER_SIZE);
-    if (n == -1) /*error*/
+    if (n == -1)
+    {
+        perror("error");
         exit(1);
+    }
 
     char *data = buffer;
     for (int i = 0; i < 4; i++)
@@ -104,11 +125,9 @@ void send_tcp()
 
     tempFile.write(data, n - (data - buffer));
     char file[BUFFER_SIZE];
-    while (n>0)
+    while (n > 0)
     {
         n = read(fd_tcp, file, BUFFER_SIZE);
-        if (n == -1) /*error*/
-            exit(1);
         tempFile.write(file, n);
     }
     tempFile.close();
@@ -125,12 +144,18 @@ void send_tcp(std::string filename)
     hints_tcp.ai_socktype = SOCK_STREAM; // TCP socket
 
     errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
-    if (errcode != 0) /*error*/
+    if (errcode != 0)
+    {
+        perror("error");
         exit(1);
+    }
 
     n = connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen);
-    if (n == -1) /*error*/
+    if (n == -1)
+    {
+        perror("error");
         exit(1);
+    }
 
     write(fd_tcp, buffer, strlen(buffer));
 
@@ -150,8 +175,11 @@ void send_tcp(std::string filename)
 
         // Send the file data via TCP
         n = write(fd_tcp, buffer, dataSize);
-        if (n == -1) /*error*/
+        if (n == -1)
+        {
+            perror("error");
             exit(1);
+        }
     }
 
     write(fd_tcp, "\n", 1);
@@ -159,8 +187,11 @@ void send_tcp(std::string filename)
     memset(buffer, 0, sizeof(buffer));
 
     n = read(fd_tcp, buffer, BUFFER_SIZE);
-    if (n == -1) /*error*/
+    if (n == -1)
+    {
+        perror("error");
         exit(1);
+    }
 
     close(fd_tcp);
 }
