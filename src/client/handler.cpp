@@ -470,7 +470,7 @@ void show_record_response(Tokens *tokens)
         printf("Auction Duration: %s seconds\n\n", (*tokens)[8].c_str());
 
         int startIndex = 9;
-        while ((*tokens)[startIndex] == "B")
+        while ((tokens->size() > 9) && ((*tokens)[startIndex] == "B"))
         {
             printf("Bidder UID: %s\n", (*tokens)[startIndex + 1].c_str());
             printf("Bid Value: %s\n", (*tokens)[startIndex + 2].c_str());
