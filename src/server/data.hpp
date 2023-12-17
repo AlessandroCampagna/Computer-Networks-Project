@@ -37,6 +37,12 @@ std::string createAuction(std::string uid, std::string name,
                           std::string fileName, std::string fileSize);
 int removeAuction(std::string aid);
 bool isAuctionOpen(std::string aid);
+bool isAuction(std::string aid);
+std::string getAuctionHostUid(std::string aid);
+std::string getAuctionName(std::string aid);
+std::string getAuctionAssetFilename(std::string aid);
+std::string getAuctionStartValue(std::string aid);
+std::string getAuctionTimeActive(std::string aid);
 
 int createBid(std::string uid, std::string aid, std::string value);
 std::vector<std::string> getAuctionsBidded(std::string uid);
