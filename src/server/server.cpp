@@ -1,15 +1,21 @@
 #include "server.hpp"
 
-void signalHandler(int signum) {
-    if (signum == SIGPIPE) {
+void signalHandler(int signum)
+{
+    if (signum == SIGPIPE)
+    {
         // Handle broken pipe signal
         std::cout << "(SERVER) Received SIGPIPE, ignoring it" << std::endl;
-    } else if (signum == SIGINT) {
+    }
+    else if (signum == SIGINT)
+    {
         // Handle interrupt signal (CTRL+C)
         std::cout << "(SERVER) Received SIGINT, exiting" << std::endl;
         closeSockets();
         exit(EXIT_SUCCESS);
-    } else if (signum == SIGTSTP) {
+    }
+    else if (signum == SIGTSTP)
+    {
         // Handle stop signal (CTRL+Z)
         std::cout << "(SERVER) Received SIGTSTP, exiting" << std::endl;
         closeSockets();
@@ -36,7 +42,7 @@ int main(int argc, char *argv[])
         switch (opt)
         {
         case 'p':
-            memccpy(port, optarg, 0, PORT_SIZE); 
+            memccpy(port, optarg, 0, PORT_SIZE);
             break;
         case 'v':
             // TODO: Print client IP and port
@@ -49,7 +55,8 @@ int main(int argc, char *argv[])
     }
 
     // Disable printing when not in verbose mode
-    if (!verbose) freopen("/dev/null", "w", stdout);
+    if (!verbose)
+        freopen("/dev/null", "w", stdout);
 
     // Create child processes for UDP and TCP
     pid_t udp, tcp;

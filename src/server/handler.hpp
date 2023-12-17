@@ -20,12 +20,13 @@ Command login(Tokens *);
 Command logout(Tokens *);
 Command unregister(Tokens *);
 Command myAuctions(Tokens *);
+Command myBids(Tokens *);
+Command listAuctions(Tokens *);
 // TCP commands
 Command openAuction(Tokens *);
 Command closeAuction(Tokens *);
 Command sendAsset(Tokens *);
 Command placeBid(Tokens *);
-Command myBids(Tokens *);
 
 Command handleRequest(char *buffer);
 

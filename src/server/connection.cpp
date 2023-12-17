@@ -10,9 +10,12 @@ static void TCPSendFile(int childSocket, char *buffer);
 
 void closeSockets()
 {
-    if (UDPsocket != -1) close(UDPsocket);
-    if (TCPsocket != -1) close(TCPsocket);
-    if (TCPchildSocket != -1) close(TCPchildSocket);
+    if (UDPsocket != -1)
+        close(UDPsocket);
+    if (TCPsocket != -1)
+        close(TCPsocket);
+    if (TCPchildSocket != -1)
+        close(TCPchildSocket);
 }
 
 void UDPConnection(char *port)
@@ -151,7 +154,9 @@ void TCPChild(int childSocket, struct sockaddr_in addr)
     if (strncmp(buffer, "RSA OK", 6) == 0)
     {
         TCPSendFile(childSocket, buffer);
-    } else {
+    }
+    else
+    {
         messageSize = send(childSocket, buffer, messageSize, 0);
         if (messageSize == -1)
         {
