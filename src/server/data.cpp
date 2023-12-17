@@ -278,9 +278,7 @@ std::string getAssetName(std::string aid)
     // Iterate over the auction folder to find the asset file
     for (const auto &entry : fs::directory_iterator(AUCTION_PATH + aid + ASSET))
     {
-        // Cast entry to void
-        (void)entry;
-        assetName = assetName.substr(assetName.find_last_of("/") + 1);
+        assetName = entry.path().filename().string();
         break;
     }
 

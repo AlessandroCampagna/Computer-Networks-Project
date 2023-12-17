@@ -10,12 +10,9 @@ static void TCPSendFile(int childSocket, char *buffer);
 
 void closeSockets()
 {
-    if (UDPsocket != -1)
-        close(UDPsocket);
-    if (TCPsocket != -1)
-        close(TCPsocket);
-    if (TCPchildSocket != -1)
-        close(TCPchildSocket);
+    if (UDPsocket != -1) close(UDPsocket);
+    if (TCPsocket != -1) close(TCPsocket);
+    if (TCPchildSocket != -1) close(TCPchildSocket);
 }
 
 void UDPConnection(char *port)
@@ -257,33 +254,23 @@ void TCPSendFile(int childSocket, char *buffer)
 {
     printf("\n(TCP) Sending file \n");
 
-    // Store metadata
-    char metadata[TCP_BUFFER_SIZE];
+    // Extract file name and size from the third and fourth tokens
+    std::string fileName = buffer;
+    fileName = fileName.substr(fileName.find(" ") + 1);
+    fileName = fileName.substr(fileName.find(" ") + 1);
+    fileName = fileName.substr(0, fileName.find(" "));
+    std::string fileSize = buffer;
+    fileSize = fileSize.substr(fileSize.find_last_of(" ") + 1);
 
-    // Clear buffer and copy data
-    memset(metadata, 0, TCP_BUFFER_SIZE);
-    memcpy(metadata, buffer, TCP_BUFFER_SIZE);
+    printf("(TCP) File name: %s\n", fileName.c_str());
+    printf("(TCP) File size: %s\n", fileSize.c_str());
 
-    // Parse metadata into tokens (using c++)
-    // Make the buffer a cpp string
-    std::string str(metadata);
-
-    // Split the string into tokens
-    std::string delimiter = " ";
-    Tokens tokens;
-    std::string token;
-    std::istringstream tokenStream(str);
-
-    while (std::getline(tokenStream, token, delimiter[0]))
-    {
-        tokens.push_back(token);
-    }
-
-    // Remove \n from last token
-    tokens[4].pop_back();
+    // Remove \n from the end of the buffer
+    buffer[strlen(buffer) - 1] = ' ';
+    printf("(TCP) Buffer: -%s-\n", buffer);
 
     // Send the metadata to the client
-    if (send(childSocket, metadata, TCP_BUFFER_SIZE, 0) < 0)
+    if (send(childSocket, buffer, TCP_BUFFER_SIZE, 0) < 0)
     {
         perror("Error sending metadata\n");
         exit(EXIT_FAILURE);
@@ -298,16 +285,16 @@ void TCPSendFile(int childSocket, char *buffer)
         exit(EXIT_FAILURE);
     }
 
-    // Get the file size
-    file.seekg(0, std::ios::end);
-    int fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
+    memset(buffer, 0, TCP_BUFFER_SIZE);
 
     // Send the file data to the client
-    while (fileSize > 0)
+    while (!file.eof())
     {
-        int bytesRead = file.read(buffer, TCP_BUFFER_SIZE).gcount();
-        if (bytesRead <= 0)
+        file.read(buffer, TCP_BUFFER_SIZE);
+        std::streamsize bytesRead = file.gcount();
+
+        // Check if the read operation was successful
+        if (!file && !file.eof())
         {
             perror("Error reading file\n");
             file.close();
@@ -321,8 +308,15 @@ void TCPSendFile(int childSocket, char *buffer)
             exit(EXIT_FAILURE);
         }
 
-        fileSize -= bytesRead;
+        memset(buffer, 0, TCP_BUFFER_SIZE);
     }
 
     file.close();
+
+    // Remove the temporary file
+    if (remove(TEMP_PATH) != 0)
+    {
+        perror("Error deleting temporary file\n");
+        exit(EXIT_FAILURE);
+    }
 }
