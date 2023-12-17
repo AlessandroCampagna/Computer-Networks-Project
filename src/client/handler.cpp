@@ -106,7 +106,6 @@ void signalHandler(int signum)
     {
         // Handle broken pipe signal
         printf("Received SIGPIPE, ignoring it\n");
-        logged = false;
     }
     else if ((signum == SIGINT) or (signum == SIGTSTP))
     {

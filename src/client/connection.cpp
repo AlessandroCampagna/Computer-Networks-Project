@@ -209,7 +209,14 @@ void send_tcp(std::string filename)
         return;
     }
 
-    write(fd_tcp, buffer, strlen(buffer));
+    n = write(fd_tcp, buffer, strlen(buffer));
+    if (n == -1)
+    {
+        perror("Error sending message");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
+    }
 
     // Open the file
     std::ifstream file(filename, std::ios::binary);
