@@ -38,5 +38,7 @@
 ASDIR/AUCTIONS/*
 ASDIR/USERS/*
 
+ASSETS/*
+
 # Report
 *.html
