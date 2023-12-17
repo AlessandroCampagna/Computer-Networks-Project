@@ -1,6 +1,6 @@
 #include "data.hpp"
 
-//TODO: Implement fs erros logic
+// TODO: Implement fs erros logic
 
 namespace fs = std::filesystem;
 
@@ -138,7 +138,8 @@ std::vector<std::string> getAllAuctions()
 std::string findNextAuctionID()
 {
     // Check if the directory exists
-    if (!fs::exists(AUCTION_PATH)) {
+    if (!fs::exists(AUCTION_PATH))
+    {
         return "001";
     }
 
@@ -154,9 +155,11 @@ std::string findNextAuctionID()
     return std::to_string(count / 100 % 10) + std::to_string(count / 10 % 10) + std::to_string(count % 10);
 }
 
-std::ifstream openTempFile(const std::string& filename) {
+std::ifstream openTempFile(const std::string &filename)
+{
     std::ifstream tempFile(filename, std::ios::binary);
-    if (!tempFile) {
+    if (!tempFile)
+    {
         perror("(Handler) Error opening temporary file");
         exit(EXIT_FAILURE);
     }
@@ -165,11 +168,11 @@ std::ifstream openTempFile(const std::string& filename) {
 
 // Create an auction for the user in the database
 std::string createAuction(std::string uid, std::string name,
-                                           std::string startValue, std::string timeActive,
-                                           std::string fileName, std::string fileSize)
+                          std::string startValue, std::string timeActive,
+                          std::string fileName, std::string fileSize)
 {
     std::string aid = findNextAuctionID();
-    //TODO: Implement datetime logic
+    // TODO: Implement datetime logic
     std::string dateTime = "dateTime";
     std::string fullTime = "fullTime";
 
@@ -185,8 +188,8 @@ std::string createAuction(std::string uid, std::string name,
 
     // Create start file
     std::ofstream start(AUCTION_PATH + aid + START + aid + ".txt");
-    start << uid + " " + name + " " + fileName + " " + startValue + " " + 
-    timeActive + " " + dateTime + " " + fullTime;
+    start << uid + " " + name + " " + fileName + " " + startValue + " " +
+                 timeActive + " " + dateTime + " " + fullTime;
 
     // Create bids directory
     fs::create_directories(AUCTION_PATH + aid + BIDS);
@@ -200,7 +203,7 @@ std::string createAuction(std::string uid, std::string name,
 // Close an auction in the database
 int removeAuction(std::string aid)
 {
-    //TODO: Implement datetime logic and error codes
+    // TODO: Implement datetime logic and error codes
     std::string dateTime = "datetime";
     std::string secTime = "sectime";
 
@@ -222,10 +225,10 @@ int createBid(std::string uid, std::string aid, std::string value)
 {
     // Create bid file on user folder
     std::ofstream userBid(USER_PATH + uid + BIDDED + aid + ".txt");
-    
+
     // Create bid file on auctions
     std::ofstream auctionBid(AUCTION_PATH + aid + BIDS + value + ".txt");
-    
+
     return 0;
 }
 
@@ -246,9 +249,10 @@ std::vector<std::string> getAuctionsBided(std::string uid)
 int loadAsset(std::string aid)
 {
 
-    if (!fs::exists(AUCTION_PATH + aid)) {
+    if (!fs::exists(AUCTION_PATH + aid))
+    {
         return -1;
-    }   
+    }
 
     // Iterate over the auction folder to find the asset file
     for (const auto &entry : fs::directory_iterator(AUCTION_PATH + aid + ASSET))
