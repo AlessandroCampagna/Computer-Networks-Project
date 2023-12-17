@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
     while (true)
     {
         memset(&buffer, 0, sizeof buffer);
+        printf("> ");
         fgets(buffer, sizeof(buffer), stdin);
         handle_buffer();
         printf("\n");
