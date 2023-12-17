@@ -39,7 +39,7 @@ int removeAuction(std::string aid);
 bool isAuctionOpen(std::string aid);
 
 int createBid(std::string uid, std::string aid, std::string value);
-std::vector<std::string> getAuctionsBided(std::string uid);
+std::vector<std::string> getAuctionsBidded(std::string uid);
 
 int loadAsset(std::string aid);
 std::string getAssetName(std::string aid);

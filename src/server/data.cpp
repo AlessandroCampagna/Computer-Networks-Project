@@ -220,7 +220,7 @@ int createBid(std::string uid, std::string aid, std::string value)
     return 0;
 }
 
-std::vector<std::string> getAuctionsBided(std::string uid)
+std::vector<std::string> getAuctionsBidded(std::string uid)
 {
     std::vector<std::string> auctions;
     for (const auto &entry : fs::directory_iterator(USER_PATH + uid + BIDDED))
