@@ -32,8 +32,8 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"RSA", show_asset_response},
     {"RBD", bid_response}};
 
-std::string uid;
-std::string password;
+std::string uid, temp_uid;
+std::string password, temp_pass;
 bool logged = false;
 
 void handle_buffer()
@@ -41,8 +41,13 @@ void handle_buffer()
     Tokens tokens = parse_buffer();
     auto it = command_map.find(tokens[0]);
     if (it != command_map.end())
-    {
+    {   
+        if ((tokens[0] != "login") && (!logged))
         it->second(&tokens);
+        else
+        {
+            printf("User not logged in\n");
+        }
     }
     else
     {
@@ -112,10 +117,9 @@ void login(Tokens *tokens)
     else
     {
         (*tokens)[0] = "LIN";
-        std::string rawUid = (*tokens)[1];
-        uid = std::string(6 - rawUid.length(), '0') + rawUid;
+        temp_uid = std::string(6 - rawUid.length(), '0') + (*tokens)[1];;
         (*tokens)[1] = uid;
-        password = (*tokens)[2];
+        temp_pass = (*tokens)[2];
 
         diparse_buffer(tokens);
         send_udp();
@@ -129,6 +133,8 @@ void login_response(Tokens *tokens)
     {
         printf("successful login\n");
         logged = true;
+        uid = temp_uid;
+        password = temp_pass;
     }
     else if ((*tokens)[1] == "NOK")
     {
