@@ -97,18 +97,6 @@ bool isUserAuction(std::string uid, std::string aid)
     return false;
 }
 
-// Check if a user has auctions in the database
-bool areUserAuctions(std::string uid)
-{
-    // Check if inside auction directory exists any file
-    for (const auto &entry : fs::directory_iterator(USER_PATH + uid + HOSTED))
-    {
-        (void)entry; // Cast to void to avoid unused variable warning
-        return true;
-    }
-    return false;
-}
-
 // Return user auctions in the database
 std::vector<std::string> getAuctions(std::string uid)
 {
