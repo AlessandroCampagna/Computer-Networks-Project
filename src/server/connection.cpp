@@ -269,7 +269,7 @@ void TCPSendFile(int childSocket, char *buffer)
     buffer[strlen(buffer) - 1] = ' ';
 
     ssize_t n;
-    
+
     n = write(childSocket, buffer, strlen(buffer));
     if (n == -1)
     {
@@ -315,5 +315,5 @@ void TCPSendFile(int childSocket, char *buffer)
         return;
     }
 
-    memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, TCP_BUFFER_SIZE);
 }
