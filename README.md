@@ -15,17 +15,25 @@ This projects implements a simple client-server relationship for a hypothetical 
 
 The AS server follows a hierarchical structure.
 
+#### Server:
+
 The main function lives inside the server module where the command line arguments are parsed and the TCP and UDP channels are forked.
+
+#### Sockets and Connection:
 
 The sockets module is used as an abstraction for opening the communication sockets inside the connection module where the requests and responses are received and sent.
 
+#### Handler:
+
 The handler is responsible for processing all requests made by the clients, utilizing the data module to read and write to the database located inside the "ASDIR" folder.
+
+#### Time:
 
 The time module is used to format and obtain current time.
 
 ### Client
 
-The Client or User follows hierarchical structure ( user -> handler -> connection ).
+The Client or User follows a hierarchical structure ( user -> handler -> connection ).
 
 #### User:
 
@@ -39,7 +47,7 @@ The handler module is responsible for processing all requests made by the client
 
 The connection module handles the connection between the client and the server. It is responsible for establishing the connection, sending requests, and receiving responses/files.
 
-#### Additional info
+#### Additional Information
 
-    - The Folder ASSETS need to be on the same directoriy as src
-    - Both the sent files and recieved ones need to be stored in the ASSETS folder
+- The ASSETS folder needs to be on the same directoriy as the src folder.
+- Both the sent and recieved files need to be stored in the ASSETS folder.
