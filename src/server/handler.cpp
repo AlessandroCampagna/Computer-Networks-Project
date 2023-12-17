@@ -177,15 +177,8 @@ Command myAuctions(Tokens *token)
         response.push_back("RMA");
         response.push_back("NLG");
     }
-    else if (!areUserAuctions(uid))
-    {
-        response.push_back("RMA");
-        response.push_back("NOK");
-    }
     else
     {
-        response.push_back("RMA");
-        response.push_back("OK");
         for (auto auction : getAuctions(uid))
         {
             response.push_back(auction);
@@ -197,6 +190,14 @@ Command myAuctions(Tokens *token)
             {
                 response.push_back("0");
             }
+        }
+
+        response.insert(response.begin(), "RMA");
+        if (response.size() == 1)
+        {
+            response.push_back("NOK");
+        } else {
+            response.insert(response.begin() + 1, "OK");
         }
     }
 
@@ -216,16 +217,9 @@ Command myBids(Tokens *token)
         response.push_back("RMB");
         response.push_back("NLG");
     }
-    else if (!areUserAuctions(uid))
-    {
-        response.push_back("RMB");
-        response.push_back("NOK");
-    }
     else
     {
-        response.push_back("RMB");
-        response.push_back("OK");
-        for (auto auction : getAuctionsBided(uid))
+        for (auto auction : getAuctionsBidded(uid))
         {
             response.push_back(auction);
             if (isAuctionOpen(auction))
@@ -236,6 +230,14 @@ Command myBids(Tokens *token)
             {
                 response.push_back("0");
             }
+        }
+
+        response.insert(response.begin(), "RMB");
+        if (response.size() == 1)
+        {
+            response.push_back("NOK");
+        } else {
+            response.insert(response.begin() + 1, "OK");
         }
     }
 
