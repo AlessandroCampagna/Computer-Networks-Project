@@ -168,11 +168,8 @@ std::string createAuction(std::string uid, std::string name,
     fs::create_directories(AUCTION_PATH + aid);
     // Create asset file and asset folder
     fs::create_directories(AUCTION_PATH + aid + ASSET);
-    std::ofstream asset(AUCTION_PATH + aid + ASSET + fileName);
-    // Load from the temp file
-    std::ifstream tempFile = openTempFile(TEMP_PATH);
-    asset << tempFile.rdbuf();
-    tempFile.close();
+    //move temp to right folder
+    std::filesystem::rename(TEMP_PATH, AUCTION_PATH + aid + ASSET + fileName);
 
     // Create start file
     std::ofstream start(AUCTION_PATH + aid + START + aid + ".txt");
