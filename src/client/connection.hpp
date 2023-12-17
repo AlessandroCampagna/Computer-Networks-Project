@@ -29,6 +29,7 @@ void initializer(int argc, char *argv[]);
 void send_udp();
 void send_tcp();
 void send_tcp(std::string);
+void send_txt(std::string);
 void close_socket();
 
 #endif

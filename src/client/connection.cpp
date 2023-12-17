@@ -81,7 +81,6 @@ void send_udp()
         {
             perror("Error receiving message");
             memset(&buffer, 0, sizeof buffer);
-            
         }
     }
 
@@ -245,7 +244,7 @@ void send_tcp(std::string filename)
         }
     }
 
-    n= write(fd_tcp, "\n", 1);
+    n = write(fd_tcp, "\n", 1);
     if (n == -1)
     {
         perror("Error sending message");
@@ -282,6 +281,100 @@ void send_tcp(std::string filename)
         }
     }
 
+    close(fd_tcp);
+}
+
+#include <fstream>
+
+void send_txt(std::string filename)
+{
+    buffer[strlen(buffer) - 1] = ' ';
+
+    fd_tcp = socket(AF_INET, SOCK_STREAM, 0); // TCP socket
+    memset(&hints_tcp, 0, sizeof hints_tcp);
+    hints_tcp.ai_family = AF_INET;       // IPv4
+    hints_tcp.ai_socktype = SOCK_STREAM; // TCP socket
+
+    errcode = getaddrinfo(ASIP, ASportStr, &hints_tcp, &res_tcp);
+    if (errcode != 0)
+    {
+        perror("Error getting address info");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
+    }
+
+    // Connect to the server
+    if (connect(fd_tcp, res_tcp->ai_addr, res_tcp->ai_addrlen) == -1)
+    {
+        perror("Error connecting to server");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
+    }
+
+    n = write(fd_tcp, buffer, strlen(buffer));
+    if (n == -1)
+    {
+        perror("Error sending message");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
+    }
+
+    // Open the text file
+    std::ifstream file(filename);
+    if (!file)
+    {
+        perror("Error opening file");
+        memset(&buffer, 0, sizeof buffer);
+        close(fd_tcp);
+        return;
+    }
+
+    // Read the file contents and send them via TCP
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (send(fd_tcp, line.c_str(), line.length(), 0) == -1)
+        {
+            perror("Error sending message");
+            memset(&buffer, 0, sizeof buffer);
+            close(fd_tcp);
+            return;
+        }
+    }
+
+    memset(buffer, 0, sizeof(buffer));
+
+    // Set the timeout to 5 seconds
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    setsockopt(fd_tcp, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
+    n = read(fd_tcp, buffer, BUFFER_SIZE);
+    if (n == -1)
+    {
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+        {
+            // Timeout occurred
+            printf("Timeout occurred. No response received.\n");
+            memset(&buffer, 0, sizeof buffer);
+            close(fd_tcp);
+            return;
+        }
+        else
+        {
+            perror("error");
+            memset(&buffer, 0, sizeof buffer);
+            close(fd_tcp);
+            return;
+        }
+    }
+
+    // Close the file and the TCP socket
+    file.close();
     close(fd_tcp);
 }
 
