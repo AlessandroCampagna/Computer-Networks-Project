@@ -131,7 +131,7 @@ std::string findNextAuctionID()
     }
 
     // Count number of existing auctions
-    int count = 0;
+    int count = 1;
     for (const auto &entry : fs::directory_iterator(AUCTION_PATH))
     {
         (void)entry; // Cast to void to avoid unused variable warning
@@ -196,6 +196,13 @@ int removeAuction(std::string aid)
     file << dateTime + " " + secTime;
 
     return 0;
+}
+
+bool isAuctionOpen(std::string aid)
+{
+    if (fs::exists(AUCTION_PATH + aid + END + aid + ".txt"))
+        return false;
+    return true;
 }
 
 // Create a bid in the database

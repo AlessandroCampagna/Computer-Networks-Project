@@ -188,7 +188,14 @@ Command myAuctions(Tokens *token)
         for (auto auction : getAuctions(uid))
         {
             response.push_back(auction);
-            response.push_back("1"); //TODO: Check if auction is active
+            if (isAuctionOpen(auction))
+            {
+                response.push_back("1");
+            }
+            else
+            {
+                response.push_back("0");
+            }
         }
     }
 
@@ -220,7 +227,14 @@ Command myBids(Tokens *token)
         for (auto auction : getAuctionsBided(uid))
         {
             response.push_back(auction);
-            response.push_back("1"); //TODO: Check if auction is active
+            if (isAuctionOpen(auction))
+            {
+                response.push_back("1");
+            }
+            else
+            {
+                response.push_back("0");
+            }
         }
     }
 

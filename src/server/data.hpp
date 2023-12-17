@@ -29,13 +29,17 @@ bool autenticateUser(std::string uid, std::string password);
 // Auction functions
 bool isAuction(std::string uid, std::string aid);
 bool areUserAuctions(std::string uid);
+
 std::vector<std::string> getAuctions(std::string uid);
 std::string createAuction(std::string uid, std::string name,
                           std::string startValue, std::string timeActive,
                           std::string fileName, std::string fileSize);
 int removeAuction(std::string aid);
+bool isAuctionOpen(std::string aid);
+
 int createBid(std::string uid, std::string aid, std::string value);
 std::vector<std::string> getAuctionsBided(std::string uid);
+
 int loadAsset(std::string aid);
 std::string getAssetName(std::string aid);
 std::string getAssetSize(std::string aid);
