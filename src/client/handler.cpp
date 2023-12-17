@@ -32,8 +32,8 @@ const std::unordered_map<std::string, CommandFunction> command_map = {
     {"RSA", show_asset_response},
     {"RBD", bid_response}};
 
-std::string uid, temp_uid;
-std::string password, temp_pass;
+std::string uid;
+std::string password;
 bool logged = false;
 
 void handle_buffer()
@@ -42,7 +42,7 @@ void handle_buffer()
     auto it = command_map.find(tokens[0]);
     if (it != command_map.end())
     {   
-        if ((tokens[0] != "login") && (!logged))
+        if ((logged) || (tokens[0] == "login") || (tokens[0] == "RLI"))
         it->second(&tokens);
         else
         {
@@ -117,9 +117,9 @@ void login(Tokens *tokens)
     else
     {
         (*tokens)[0] = "LIN";
-        temp_uid = std::string(6 - rawUid.length(), '0') + (*tokens)[1];;
+        uid = std::string(6 - (*tokens)[1].length(), '0') + (*tokens)[1];
         (*tokens)[1] = uid;
-        temp_pass = (*tokens)[2];
+        password = (*tokens)[2];
 
         diparse_buffer(tokens);
         send_udp();
@@ -131,10 +131,8 @@ void login_response(Tokens *tokens)
 {
     if ((*tokens)[1] == "OK")
     {
-        printf("successful login\n");
         logged = true;
-        uid = temp_uid;
-        password = temp_pass;
+        printf("successful login\n");
     }
     else if ((*tokens)[1] == "NOK")
     {
@@ -142,6 +140,7 @@ void login_response(Tokens *tokens)
     }
     else if ((*tokens)[1] == "REG")
     {
+        logged = true;
         printf("new user registered\n");
     }
     else
