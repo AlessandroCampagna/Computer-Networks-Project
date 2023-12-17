@@ -33,7 +33,7 @@ The time module is used to format and obtain current time.
 
 ### Client
 
-The Client or User follows a hierarchical structure ( user -> handler -> connection ).
+The Client or User follows a hierarchical structure.
 
 #### User:
 
