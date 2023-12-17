@@ -38,11 +38,13 @@ bool logged = false;
 
 void handle_buffer()
 {
+    if (strlen(buffer) == 0)
+        return;
     Tokens tokens = parse_buffer();
     auto it = command_map.find(tokens[0]);
     if (it != command_map.end())
     {
-        if ((logged) || (tokens[0] == "login") || (tokens[0] == "RLI") || (tokens[0] == "exit"))
+        if ((logged) || (tokens[0] == "login") || (tokens[0] == "RLI") || (tokens[0] == "exit") || (tokens[0] == "clear"))
             it->second(&tokens);
         else
         {
@@ -51,7 +53,7 @@ void handle_buffer()
     }
     else
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
     }
 }
 
@@ -114,9 +116,7 @@ void signalHandler(int signum)
     }
     else if ((signum == SIGINT) or (signum == SIGTSTP))
     {
-        // Handle interrupt signal (CTRL+C)
-
-        printf("\nExiting..\n");
+        // Handle interrupt signal (CTRL+C) or (CTRL+Z)
         strcpy(buffer, "exit\n");
         handle_buffer();
     }
@@ -128,7 +128,7 @@ void login(Tokens *tokens)
 {
     if ((tokens->size() != 3) || (!validator((*tokens)[1], (*tokens)[2])))
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
@@ -146,23 +146,29 @@ void login(Tokens *tokens)
 
 void login_response(Tokens *tokens)
 {
+    if ((tokens->size() != 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
+
     if ((*tokens)[1] == "OK")
     {
         logged = true;
-        printf("successful login\n");
+        printf("Successful login.\n");
     }
     else if ((*tokens)[1] == "NOK")
     {
-        printf("incorrect login attempt\n");
+        printf("Incorrect login attempt.\n");
     }
     else if ((*tokens)[1] == "REG")
     {
         logged = true;
-        printf("new user registered\n");
+        printf("New user registered.\n");
     }
     else
     {
-        printf("unknown response\n");
+        printf("Unknown response.\n");
     }
 }
 
@@ -170,7 +176,7 @@ void logout(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
@@ -187,22 +193,28 @@ void logout(Tokens *tokens)
 
 void logout_response(Tokens *tokens)
 {
+    if ((tokens->size() != 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
+
     if ((*tokens)[1] == "OK")
     {
-        printf("successful logout\n");
+        printf("Successful logout.\n");
         logged = false;
     }
     else if ((*tokens)[1] == "NOK")
     {
-        printf("user not logged in\n");
+        printf("User not logged in.\n");
     }
     else if ((*tokens)[1] == "UNR")
     {
-        printf("unknown user\n");
+        printf("Unknown user.\n");
     }
     else
     {
-        printf("unknown response\n");
+        printf("Unknown response.\n");
     }
 }
 
@@ -210,7 +222,7 @@ void unregister(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
@@ -227,23 +239,28 @@ void unregister(Tokens *tokens)
 
 void unregister_response(Tokens *tokens)
 {
+    if ((tokens->size() != 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
 
     if ((*tokens)[1] == "OK")
     {
         logged = false;
-        printf("successful unregister\n");
+        printf("Successful unregister.\n");
     }
     else if ((*tokens)[1] == "NOK")
     {
-        printf("incorrect unregister attempt\n");
+        printf("Incorrect unregister attempt.\n");
     }
     else if ((*tokens)[1] == "UNR")
     {
-        printf("unknown user\n");
+        printf("Unknown user.\n");
     }
     else
     {
-        printf("unknown response\n");
+        printf("Unknown response.\n");
     }
 }
 
@@ -251,7 +268,7 @@ void myauctions(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
@@ -267,6 +284,12 @@ void myauctions(Tokens *tokens)
 
 void myauctions_response(Tokens *tokens)
 {
+    if ((tokens->size() < 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
+
 
     if ((*tokens)[1] == "OK")
     {
@@ -279,15 +302,15 @@ void myauctions_response(Tokens *tokens)
     }
     else if ((*tokens)[1] == "NOK")
     {
-        printf("user has no ongoing auctions\n");
+        printf("User has no ongoing auctions.\n");
     }
     else if ((*tokens)[1] == "NLG")
     {
-        printf("user not logged in\n");
+        printf("User not logged in.\n");
     }
     else
     {
-        printf("unknown response\n");
+        printf("Unknown response.\n");
     }
 }
 
@@ -295,7 +318,7 @@ void mybids(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
@@ -311,6 +334,12 @@ void mybids(Tokens *tokens)
 
 void mybids_response(Tokens *tokens)
 {
+    if ((tokens->size() < 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
+
 
     if ((*tokens)[1] == "OK")
     {
@@ -323,15 +352,15 @@ void mybids_response(Tokens *tokens)
     }
     else if ((*tokens)[1] == "NOK")
     {
-        printf("user has no ongoing bids\n");
+        printf("User has no ongoing bids.\n");
     }
     else if ((*tokens)[1] == "NLG")
     {
-        printf("user not logged in\n");
+        printf("User not logged in.\n");
     }
     else
     {
-        printf("unknown response\n");
+        printf("Unknown response.\n");
     }
 }
 
@@ -339,7 +368,7 @@ void list(Tokens *tokens)
 {
     if (tokens->size() != 1)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
@@ -354,6 +383,12 @@ void list(Tokens *tokens)
 
 void list_response(Tokens *tokens)
 {
+    if ((tokens->size() < 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
+
     if ((*tokens)[1] == "OK")
     {
         for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
@@ -365,11 +400,11 @@ void list_response(Tokens *tokens)
     }
     else if ((*tokens)[1] == "NOK")
     {
-        printf("no auctions are currently active\n");
+        printf("No auctions are currently active.\n");
     }
     else
     {
-        printf("unknown response\n");
+        printf("Unknown response.\n");
     }
 }
 
@@ -377,12 +412,13 @@ void show_record(Tokens *tokens)
 {
     if (tokens->size() != 2)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
     {
         (*tokens)[0] = "SRC";
+        (*tokens)[1] = std::string(3 - (*tokens)[1].length(), '0') + (*tokens)[1];
 
         diparse_buffer(tokens);
         send_udp();
@@ -392,9 +428,15 @@ void show_record(Tokens *tokens)
 
 void show_record_response(Tokens *tokens)
 {
+    if ((tokens->size() < 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
+
     if ((*tokens)[1] == "NOK")
     {
-        printf("Auction does not exist\n");
+        printf("Auction does not exist.\n");
     }
     else if ((*tokens)[1] == "OK")
     {
@@ -430,7 +472,7 @@ void open(Tokens *tokens)
 
     if (tokens->size() != 5)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
@@ -441,7 +483,7 @@ void open(Tokens *tokens)
 
         if (!std::filesystem::exists(ASSETS_PATH + fileName))
         {
-            printf("Invalid Command\n");
+            printf("File: %s does not exist in Dir: %s\n", fileName.c_str(), ASSETS_PATH);
             return;
         }
 
@@ -461,25 +503,29 @@ void open(Tokens *tokens)
 
 void open_response(Tokens *tokens)
 {
+    if ((tokens->size() < 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
 
     std::string status = (*tokens)[1];
-    std::string AID = (*tokens)[2];
 
     if (status == "NOK")
     {
-        printf("auction could not be started\n");
+        printf("auction could not be started.\n");
     }
     else if (status == "NLG")
     {
-        printf("user was not logged in\n");
+        printf("User was not logged in.\n");
     }
     else if (status == "OK")
     {
-        printf("AID: %s\n", AID.c_str());
+        printf("AID: %s\n", (*tokens)[2].c_str());
     }
     else
     {
-        printf("unknown status\n");
+        printf("Unknown status.\n");
     }
 }
 
@@ -487,12 +533,13 @@ void close_auction(Tokens *tokens)
 {
     if (tokens->size() != 2)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
     {
         (*tokens)[0] = "CLS";
+        (*tokens)[1] = std::string(3 - (*tokens)[1].length(), '0') + (*tokens)[1];
         tokens->insert(tokens->begin() + 1, uid);
         tokens->insert(tokens->begin() + 2, password);
 
@@ -503,7 +550,13 @@ void close_auction(Tokens *tokens)
 }
 
 void close_response(Tokens *tokens)
-{
+{   
+    if ((tokens->size() != 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
+    
     std::string status = (*tokens)[1];
 
     if (status == "OK")
@@ -536,13 +589,14 @@ void show_asset(Tokens *tokens)
 {
     if (tokens->size() != 2)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
     {
 
         (*tokens)[0] = "SAS";
+        (*tokens)[1] = std::string(3 - (*tokens)[1].length(), '0') + (*tokens)[1];
 
         diparse_buffer(tokens);
         send_tcp();
@@ -552,6 +606,12 @@ void show_asset(Tokens *tokens)
 
 void show_asset_response(Tokens *tokens)
 {
+    if ((tokens->size() < 2))
+    {
+        printf("Unknown response.\n");
+        return;
+    }
+    
     std::string status = (*tokens)[1];
 
     if (status == "OK")
@@ -561,7 +621,7 @@ void show_asset_response(Tokens *tokens)
 
         std::rename(TEMP_PATH, (ASSETS_PATH + fileName).c_str());
 
-        printf("Asset %s in directory ASSETS\n", fileName.c_str());
+        printf("Asset: %s in Dir: %s\n", fileName.c_str(), ASSETS_PATH);
     }
     else if (status == "NOK")
     {
@@ -577,13 +637,14 @@ void bid(Tokens *tokens)
 {
     if (tokens->size() != 3)
     {
-        printf("Invalid Command\n");
+        printf("Invalid Command.\n");
         return;
     }
     else
     {
 
         (*tokens)[0] = "BID";
+        (*tokens)[1] = std::string(3 - (*tokens)[1].length(), '0') + (*tokens)[1];
         tokens->insert(tokens->begin() + 1, uid);
         tokens->insert(tokens->begin() + 2, password);
 
@@ -627,12 +688,13 @@ void bid_response(Tokens *tokens)
 
 void exituser(Tokens *tokens)
 {
-    if (logged){
+    if (logged)
+    {
         strcpy(buffer, "logout\n");
         handle_buffer();
     }
     close_socket();
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 void clear(Tokens *tokens)
