@@ -112,7 +112,9 @@ void login(Tokens *tokens)
     else
     {
         (*tokens)[0] = "LIN";
-        uid = (*tokens)[1];
+        std::string rawUid = (*tokens)[1];
+        uid = std::string(6 - rawUid.length(), '0') + rawUid;
+        (*tokens)[1] = uid;
         password = (*tokens)[2];
 
         diparse_buffer(tokens);
@@ -246,7 +248,7 @@ void myauctions_response(Tokens *tokens)
 
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 1)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
         {
             std::string aid = *it;
             std::string state = *(it + 1);
@@ -290,7 +292,7 @@ void mybids_response(Tokens *tokens)
 
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 1)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
         {
             std::string aid = *it;
             std::string state = *(it + 1);
@@ -332,7 +334,7 @@ void list_response(Tokens *tokens)
 {
     if ((*tokens)[1] == "OK")
     {
-        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 1)
+        for (auto it = tokens->begin() + 2; it != tokens->end(); it += 2)
         {
             std::string aid = *it;
             std::string state = *(it + 1);
@@ -378,22 +380,22 @@ void show_record_response(Tokens *tokens)
         printf("Auction Name: %s\n", (*tokens)[3].c_str());
         printf("Asset File Name: %s\n", (*tokens)[4].c_str());
         printf("Start Value: %s\n", (*tokens)[5].c_str());
-        printf("Start Date and Time: %s\n", (*tokens)[6].c_str());
-        printf("Auction Duration: %s seconds\n", (*tokens)[7].c_str());
+        printf("Start Date and Time: %s %s\n", (*tokens)[6].c_str(), (*tokens)[7].c_str());
+        printf("Auction Duration: %s seconds\n\n", (*tokens)[8].c_str());
 
-        int startIndex = 8;
+        int startIndex = 9;
         while ((*tokens)[startIndex] == "B")
         {
             printf("Bidder UID: %s\n", (*tokens)[startIndex + 1].c_str());
             printf("Bid Value: %s\n", (*tokens)[startIndex + 2].c_str());
-            printf("Bid Date and Time: %s\n", (*tokens)[startIndex + 3].c_str());
-            printf("Bid Time Elapsed: %s seconds\n\n", (*tokens)[startIndex + 4].c_str());
-            startIndex += 5;
+            printf("Bid Date and Time: %s %s\n", (*tokens)[startIndex + 3].c_str(), (*tokens)[startIndex + 4].c_str());
+            printf("Bid Time Elapsed: %s seconds\n\n", (*tokens)[startIndex + 5].c_str());
+            startIndex += 6;
         }
 
-        if ((*tokens)[tokens->size() - 2] == "E")
+        if ((*tokens)[tokens->size() - 4] == "E")
         {
-            printf("Auction Closing Date and Time: %s\n", (*tokens)[tokens->size() - 2].c_str());
+            printf("Auction Closing Date and Time: %s %s\n", (*tokens)[tokens->size() - 3].c_str(), (*tokens)[tokens->size() - 2].c_str());
             printf("Auction Closing Time Elapsed: %s seconds\n", (*tokens)[tokens->size() - 1].c_str());
         }
     }
@@ -534,13 +536,10 @@ void show_asset_response(Tokens *tokens)
     {
         std::string fileName = (*tokens)[2];
         std::string fileSize = (*tokens)[3];
-        std::string fileData = (*tokens)[4];
 
-        std::ofstream file(ASSETS_PATH + fileName);
-        file << fileData;
-        file.close();
+        std::rename(TEMP_PATH, (ASSETS_PATH + fileName).c_str());
 
-        printf("Asset in directory: %s\n", ASSETS_PATH);
+        printf("Asset %s in directory ASSETS\n", fileName.c_str());
     }
     else if (status == "NOK")
     {

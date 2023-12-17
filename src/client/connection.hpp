@@ -18,6 +18,8 @@
 #define PORT 58000 + GN
 #define BUFFER_SIZE 6010
 
+#define TEMP_PATH "../../ASSETS/temp"
+
 extern char buffer[BUFFER_SIZE];
 
 void initializer(int argc, char *argv[]);

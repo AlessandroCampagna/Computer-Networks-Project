@@ -83,6 +83,35 @@ void send_tcp()
     if (n == -1) /*error*/
         exit(1);
 
+    char *data = buffer;
+    for (int i = 0; i < 4; i++)
+    {
+        data = strchr(data, ' ');
+        if (data == NULL)
+        {
+            close(fd_tcp);
+            return;
+        }
+        data++;
+    }
+
+    std::ofstream tempFile(TEMP_PATH, std::ios::binary);
+    if (!tempFile)
+    {
+        perror("Error creating temporary file");
+        exit(1);
+    }
+
+    tempFile.write(data, n - (data - buffer));
+    char file[BUFFER_SIZE];
+    while (n>0)
+    {
+        n = read(fd_tcp, file, BUFFER_SIZE);
+        if (n == -1) /*error*/
+            exit(1);
+        tempFile.write(file, n);
+    }
+    tempFile.close();
     close(fd_tcp);
 }
 

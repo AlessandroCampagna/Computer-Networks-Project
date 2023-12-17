@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
     {
         fgets(buffer, sizeof(buffer), stdin);
         handle_buffer();
+        printf("\n");
     }
     return 0;
 }
